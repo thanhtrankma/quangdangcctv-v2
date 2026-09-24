@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+/* Tokens from design-system/quangdang-cctv/MASTER.md (ui-ux-pro-max + project overrides). */
+@theme {
+  --font-sans: var(--font-body), "IBM Plex Sans", system-ui, sans-serif;
+  --font-heading: var(--font-display), "Be Vietnam Pro", system-ui, sans-serif;
+
+  --color-primary: #0369a1;
+  --color-primary-hover: #075985;
+  --color-primary-soft: #e0f2fe;
+  --color-secondary: #0ea5e9;
+  --color-ink: #0c4a6e;
+  --color-body: #1e293b;
+  --color-muted: #475569;
+  --color-subtle: #64748b;
+  --color-surface: #f8fafc;
+  --color-tint: #f0f9ff;
+  --color-border: #e2e8f0;
+  --color-cta: #c2410c;
+  --color-cta-hover: #9a3412;
+  --color-trust: #15803d;
+  --color-price: #b91c1c;
+  --color-navy: #082f49;
+
+  /* Names the (unchanged) admin still uses, mapped onto the new palette. */
+  --color-teal-navy: #082f49;
+  --color-teal-dark: #0c4a6e;
+  --color-teal-brand: #0369a1;
+  --color-teal-50: #f0f9ff;
+  --color-teal-100: #e0f2fe;
+  --color-teal-200: #bae6fd;
+  --color-teal-border: #bae6fd;
+  --color-brand-purple: #0369a1;
+  --color-brand-purple-dark: #075985;
+  --color-brand-orange: #c2410c;
+  --color-brand-orange-dark: #9a3412;
+  --color-ink-soft: #475569;
+  --color-ink-faint: #64748b;
+  --color-line: #e2e8f0;
+
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.04);
+  --shadow-lift: 0 10px 24px -8px rgb(3 105 161 / 0.25);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--color-body);
+    background: var(--color-surface);
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-heading);
+    color: var(--color-ink);
+    text-wrap: balance;
+  }
+  a, button, [role="button"], summary, select, label[for] {
+    cursor: pointer;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-secondary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  button {
+    touch-action: manipulation;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.container-x {
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+@media (min-width: 768px) {
+  .container-x { padding-inline: 24px; }
+}
+
+/* Rich-text content from the admin (product descriptions, posts, pages). */
+.rich-content {
+  font-size: 16px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+  color: var(--color-body);
+}
+.rich-content > * + * { margin-top: 1em; }
+.rich-content h2 { font-size: 1.5rem; font-weight: 700; margin-top: 1.6em; line-height: 1.3; }
+.rich-content h3 { font-size: 1.25rem; font-weight: 600; margin-top: 1.3em; line-height: 1.35; }
+.rich-content h4 { font-size: 1.05rem; font-weight: 600; margin-top: 1.1em; }
+.rich-content a { color: var(--color-primary); text-decoration: underline; text-underline-offset: 2px; }
+.rich-content a:hover { color: var(--color-primary-hover); }
+.rich-content ul { list-style: disc; padding-left: 1.4em; }
+.rich-content ol { list-style: decimal; padding-left: 1.4em; }
+.rich-content li + li { margin-top: 0.35em; }
+.rich-content li::marker { color: var(--color-primary); }
+.rich-content img { max-width: 100%; height: auto; margin-inline: auto; border-radius: 12px; }
+.rich-content blockquote { border-left: 4px solid var(--color-primary); background: var(--color-tint); padding: 12px 16px; border-radius: 0 8px 8px 0; }
+.rich-content table { width: 100%; border-collapse: collapse; font-size: 15px; display: block; overflow-x: auto; }
+.rich-content th, .rich-content td { border: 1px solid var(--color-border); padding: 10px 12px; text-align: left; vertical-align: top; }
+.rich-content thead th, .rich-content tr > th:first-child { background: var(--color-tint); color: var(--color-ink); font-weight: 600; }
+.rich-content iframe { max-width: 100%; border-radius: 12px; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Tiptap editor in the admin */
+.tiptap { outline: none; min-height: 260px; }
+.tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}

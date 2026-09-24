@@ -1,0 +1,174 @@
+"use server";
+
+import fs from "node:fs/promises";
+import path from "node:path";
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { checkCredentials, createSessionToken, SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
+import { getResource, getSettingsGroup, type Field } from "@/lib/admin/config";
+import { db, isSupabaseConfigured } from "@/lib/db";
+import { supabaseAdmin } from "@/lib/db/supabase";
+import { slugify } from "@/lib/format";
+import type { Settings, SettingsKey } from "@/lib/types";
+
+export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
+
+async function requireAdmin() {
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+  if (!verifySessionToken(token)) throw new Error("Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.");
+}
+
+export async function login(_: string | null, form: FormData) {
+  const email = String(form.get("email") ?? "");
+  const password = String(form.get("password") ?? "");
+  if (!checkCredentials(email, password)) return "Email hoặc mật khẩu không đúng.";
+  const { token, maxAge } = createSessionToken();
+  (await cookies()).set(SESSION_COOKIE, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge,
+  });
+  const next = String(form.get("next") || "/admin/");
+  redirect(next.startsWith("/admin") ? next : "/admin/");
+}
+
+export async function logout() {
+  (await cookies()).delete(SESSION_COOKIE);
+  redirect("/admin/login/");
+}
+
+/** Coerce raw form values into what the database expects, keeping only configured fields. */
+function coerce(fields: Field[], values: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const f of fields) {
+    if (f.type === "readonly" || f.type === "order_items") continue;
+    const v = values[f.name];
+    switch (f.type) {
+      case "number":
+        out[f.name] = Number(v) || 0;
+        break;
+      case "money":
+        out[f.name] = v === "" || v === null || v === undefined ? (f.required ? 0 : null) : Math.max(0, Math.round(Number(v) || 0));
+        break;
+      case "boolean":
+        out[f.name] = Boolean(v);
+        break;
+      case "relation":
+        out[f.name] = v ? String(v) : null;
+        break;
+      case "images":
+        out[f.name] = Array.isArray(v) ? v.filter(Boolean).map(String) : [];
+        break;
+      case "list":
+        out[f.name] = Array.isArray(v) ? v.map((item) => coerce(f.fields ?? [], (item ?? {}) as Record<string, unknown>)) : [];
+        break;
+      case "slug":
+        out[f.name] = slugify(String(v ?? "")) || slugify(String(values[f.from ?? ""] ?? ""));
+        break;
+      case "date":
+        out[f.name] = v ? String(v) : new Date().toISOString().slice(0, 10);
+        break;
+      default:
+        out[f.name] = v === null || v === undefined ? "" : String(v);
+    }
+  }
+  return out;
+}
+
+function validate(fields: Field[], data: Record<string, unknown>) {
+  for (const f of fields) {
+    if (!f.required) continue;
+    const v = data[f.name];
+    if (v === "" || v === null || v === undefined || (Array.isArray(v) && !v.length)) return `Vui lòng nhập “${f.label}”.`;
+  }
+  return null;
+}
+
+export async function saveRecord(resourceKey: string, id: string | null, values: Record<string, unknown>): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const res = getResource(resourceKey);
+    if (!res) return { ok: false, error: "Không tìm thấy mục quản lý" };
+    const data = coerce(res.fields, values);
+    const err = validate(res.fields, data);
+    if (err) return { ok: false, error: err };
+
+    if ("slug" in data) {
+      const dup = await db().findOne<{ id: string }>(res.key, { slug: data.slug });
+      if (dup && dup.id !== id) return { ok: false, error: `Đường dẫn “${data.slug}” đã được dùng, hãy chọn slug khác.` };
+    }
+    if (res.key === "categories" && id && data.parent_id === id) return { ok: false, error: "Danh mục không thể là cha của chính nó." };
+
+    const row = id
+      ? await db().update<{ id: string }>(res.key, id, data)
+      : await db().insert<{ id: string }>(res.key, data);
+    revalidatePath("/", "layout");
+    return { ok: true, id: row.id };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export async function deleteRecord(resourceKey: string, id: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const res = getResource(resourceKey);
+    if (!res) return { ok: false, error: "Không tìm thấy mục quản lý" };
+    await db().remove(res.key, id);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+export async function saveSettings(groupKey: string, values: Record<string, unknown>): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const group = getSettingsGroup(groupKey);
+    if (!group) return { ok: false, error: "Không tìm thấy nhóm cài đặt" };
+    const current = await db().getSettings();
+    const next = { ...current[group.key], ...coerce(group.fields, values) } as Settings[SettingsKey];
+    await db().setSetting(group.key, next);
+    revalidatePath("/", "layout");
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+const ALLOWED = new Set(["image/jpeg", "image/png", "image/webp", "image/gif", "image/svg+xml", "image/avif"]);
+
+/** Upload an image: Supabase Storage when connected, otherwise public/uploads (local dev only). */
+export async function uploadImage(form: FormData): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  try {
+    await requireAdmin();
+    const file = form.get("file");
+    if (!(file instanceof File) || !file.size) return { ok: false, error: "Chưa chọn file" };
+    if (!ALLOWED.has(file.type)) return { ok: false, error: "Chỉ hỗ trợ ảnh JPG, PNG, WEBP, GIF, SVG, AVIF" };
+    if (file.size > 10 * 1024 * 1024) return { ok: false, error: "Ảnh tối đa 10MB" };
+
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+    const base = slugify(file.name.replace(/\.[^.]+$/, "")).slice(0, 60) || "image";
+    const d = new Date();
+    const key = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${base}-${Date.now().toString(36)}.${ext}`;
+    const bytes = Buffer.from(await file.arrayBuffer());
+
+    if (isSupabaseConfigured()) {
+      const bucket = process.env.SUPABASE_STORAGE_BUCKET || "media";
+      const { error } = await supabaseAdmin().storage.from(bucket).upload(key, bytes, { contentType: file.type, upsert: false });
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, url: supabaseAdmin().storage.from(bucket).getPublicUrl(key).data.publicUrl };
+    }
+    if (process.env.VERCEL) return { ok: false, error: "Cần kết nối Supabase để upload ảnh trên Vercel. Tạm thời hãy dán link ảnh." };
+    const dest = path.join(process.cwd(), "public", "uploads", key);
+    await fs.mkdir(path.dirname(dest), { recursive: true });
+    await fs.writeFile(dest, bytes);
+    return { ok: true, url: `/uploads/${key}` };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
