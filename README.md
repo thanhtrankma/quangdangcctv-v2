@@ -38,6 +38,16 @@ npm run db:seed -- --reset                                                     #
 
 `--reset` xoá toàn bộ sản phẩm, danh mục, thương hiệu, banner, tin tức, trang, video và ghi đè cài đặt (đơn hàng và liên hệ được giữ lại). Link cũ dạng `/ten-san-pham.html` tự chuyển hướng 301 sang link mới.
 
+## Kho hàng, nhập hàng & giá (migration 002)
+
+Chạy `supabase/migrations/002_inventory_pricing.sql` trong Supabase → SQL Editor **trước khi deploy** code có phần kho.
+
+- **Phiếu nhập hàng**: Nháp → Đã nhập kho (cộng tồn, tính giá vốn bình quân, phí ship/chiết khấu phân bổ theo giá trị) → Huỷ (trừ lại tồn).
+- **Đơn hàng**: chuyển sang Đã xác nhận / Đang giao / Hoàn thành → trừ kho & chốt giá vốn; Huỷ → hàng về kho.
+- **Kiểm kho** (`/admin/inventory/stocktake/`): nhập số đếm thực tế, chênh lệch ghi vào thẻ kho. Dùng để khai báo tồn đầu kỳ.
+- **Tồn kho** (`/admin/inventory/`), **Thẻ kho**, **Lịch sử giá**, **Cập nhật giá hàng loạt** (`/admin/pricing/`), **Báo cáo** (`/admin/reports/`).
+- Tồn kho chỉ thay đổi qua hàm SQL `apply_stock_movement` (khoá dòng, không lệch số khi thao tác đồng thời).
+
 ## Deploy Vercel
 
 1. Đẩy code lên GitHub → Vercel **Add New Project** → import repo (Framework: Next.js).

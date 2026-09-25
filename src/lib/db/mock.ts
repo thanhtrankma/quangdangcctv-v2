@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { seedSettings, seedTables } from "@/data/seed";
 import type { Settings, SettingsKey } from "@/lib/types";
-import type { ListResult, Query, Repo, TableName } from "./types";
+import type { ListResult, Query, Repo, StockMoveInput, TableName } from "./types";
 
 type Row = Record<string, unknown> & { id: string };
 type Store = { tables: Record<string, Row[]>; settings: Partial<Settings> };
@@ -73,6 +73,7 @@ function applyQuery<T>(rows: Row[], q: Query = {}): ListResult<T> {
   const count = out.length;
   const offset = q.offset ?? 0;
   out = q.limit !== undefined ? out.slice(offset, offset + q.limit) : out.slice(offset);
+  if (q.columns) out = out.map((r) => Object.fromEntries(q.columns!.map((c) => [c, r[c]])) as Row);
   return { rows: structuredClone(out) as T[], count };
 }
 
@@ -119,5 +120,37 @@ export const mockRepo: Repo = {
   async setSetting(key, value) {
     load().settings[key] = structuredClone(value);
     persist();
+  },
+  // Same rules as the apply_stock_movement SQL function (supabase/migrations/002).
+  async stockMove(m: StockMoveInput) {
+    const store = load();
+    const p = store.tables.products.find((r) => r.id === m.productId);
+    if (!p) throw new Error(`Không tìm thấy sản phẩm ${m.productId}`);
+    const stock = Number(p.stock ?? 0);
+    const cost = Number(p.cost_price ?? 0);
+    let newCost = cost;
+    if (m.type === "purchase" && m.qty > 0 && m.unitCost != null) {
+      const base = Math.max(stock, 0);
+      newCost = Math.round((base * cost + m.qty * m.unitCost) / (base + m.qty));
+    }
+    const now = new Date().toISOString();
+    Object.assign(p, { stock: stock + m.qty, cost_price: newCost, track_stock: true, updated_at: now });
+    store.tables.stock_movements.unshift({
+      id: crypto.randomUUID(),
+      product_id: m.productId,
+      product_name: String(p.name ?? ""),
+      type: m.type,
+      qty: m.qty,
+      stock_after: stock + m.qty,
+      unit_cost: m.unitCost ?? cost,
+      ref_type: m.refType ?? "",
+      ref_id: m.refId ?? "",
+      ref_code: m.refCode ?? "",
+      note: m.note ?? "",
+      created_at: now,
+      updated_at: now,
+    });
+    persist();
+    return stock + m.qty;
   },
 };

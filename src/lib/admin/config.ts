@@ -22,6 +22,7 @@ export type FieldType =
   | "color"
   | "list"
   | "order_items"
+  | "po_items"
   | "readonly";
 
 export interface Field {
@@ -44,12 +45,14 @@ export interface Field {
   fields?: Field[];
   itemLabel?: string;
   default?: unknown;
+  /** How a readonly field is displayed. */
+  format?: "money" | "number" | "datetime" | "text";
 }
 
 export interface Column {
   name: string;
   label: string;
-  type?: "text" | "image" | "money" | "boolean" | "relation" | "date" | "datetime" | "status" | "images";
+  type?: "text" | "image" | "money" | "boolean" | "relation" | "date" | "datetime" | "status" | "images" | "number" | "stock" | "signed";
   relation?: TableName;
 }
 
@@ -64,6 +67,9 @@ export interface Resource {
   defaultOrder: { column: string; ascending?: boolean }[];
   filters?: { name: string; label: string; options?: { value: string; label: string }[]; relation?: TableName }[];
   canCreate?: boolean;
+  /** List + view only (history tables). */
+  readOnly?: boolean;
+  canDelete?: boolean;
   /** Public URL for the "Xem trên web" link. */
   viewPath?: (row: Record<string, unknown>) => string | null;
   titleField: string;
@@ -95,6 +101,26 @@ export const ORDER_STATUS = [
   { value: "shipping", label: "Đang giao" },
   { value: "completed", label: "Hoàn thành" },
   { value: "cancelled", label: "Đã huỷ" },
+];
+
+export const PURCHASE_STATUS = [
+  { value: "draft", label: "Nháp" },
+  { value: "received", label: "Đã nhập kho" },
+  { value: "cancelled", label: "Đã huỷ" },
+];
+
+export const MOVEMENT_TYPES = [
+  { value: "purchase", label: "Nhập hàng" },
+  { value: "purchase_cancel", label: "Huỷ phiếu nhập" },
+  { value: "sale", label: "Xuất bán" },
+  { value: "sale_return", label: "Hoàn / huỷ đơn" },
+  { value: "adjustment", label: "Kiểm kho / điều chỉnh" },
+];
+
+export const PRICE_SOURCES = [
+  { value: "manual", label: "Sửa tay" },
+  { value: "bulk", label: "Cập nhật hàng loạt" },
+  { value: "purchase", label: "Nhập hàng" },
 ];
 
 export const CONTACT_STATUS = [
@@ -133,7 +159,16 @@ export const resources: Resource[] = [
       { name: "note", label: "Ghi chú của khách", type: "textarea" },
       { name: "code", label: "Mã đơn", type: "readonly", side: true },
       { name: "total", label: "Tổng tiền", type: "readonly", side: true },
-      { name: "status", label: "Trạng thái", type: "select", options: ORDER_STATUS, side: true, default: "new" },
+      {
+        name: "status",
+        label: "Trạng thái",
+        type: "select",
+        options: ORDER_STATUS,
+        side: true,
+        default: "new",
+        help: "Chuyển sang Đã xác nhận / Đang giao / Hoàn thành sẽ tự trừ kho; chuyển sang Đã huỷ sẽ trả hàng về kho.",
+      },
+      { name: "cost_total", label: "Giá vốn đơn hàng", type: "readonly", format: "money", side: true, help: "Ghi nhận lúc trừ kho" },
       { name: "admin_note", label: "Ghi chú nội bộ", type: "textarea", side: true },
     ],
   },
@@ -180,9 +215,10 @@ export const resources: Resource[] = [
     columns: [
       { name: "images", label: "Ảnh", type: "images" },
       { name: "name", label: "Tên sản phẩm" },
-      { name: "price", label: "Giá", type: "money" },
+      { name: "price", label: "Giá bán", type: "money" },
+      { name: "cost_price", label: "Giá vốn", type: "money" },
+      { name: "stock", label: "Tồn", type: "stock" },
       { name: "category_id", label: "Danh mục", type: "relation", relation: "categories" },
-      { name: "brand_id", label: "Thương hiệu", type: "relation", relation: "brands" },
       { name: "status", label: "Trạng thái", type: "status" },
     ],
     fields: [
@@ -190,6 +226,10 @@ export const resources: Resource[] = [
       { name: "slug", label: "Đường dẫn (slug)", type: "slug", from: "name", required: true, help: "URL: /san-pham/<slug>/" },
       { name: "price", label: "Giá bán (₫)", type: "money", width: "half", required: true, help: "Nhập 0 để hiển thị “Liên hệ”" },
       { name: "compare_at_price", label: "Giá gốc (₫) – để hiện % giảm", type: "money", width: "half" },
+      { name: "cost_price", label: "Giá vốn (₫)", type: "money", width: "half", help: "Tự cập nhật theo bình quân khi nhập hàng" },
+      { name: "wholesale_price", label: "Giá sỉ / đại lý (₫)", type: "money", width: "half" },
+      { name: "stock", label: "Tồn kho hiện tại", type: "readonly", format: "number", width: "half", help: "Thay đổi qua Nhập hàng, Đơn hàng hoặc Kiểm kho" },
+      { name: "low_stock_threshold", label: "Cảnh báo khi tồn ≤", type: "number", width: "half", default: 2 },
       { name: "sku", label: "SKU", type: "text", width: "half" },
       { name: "variant_label", label: "Phân loại / màu / size", type: "text", width: "half" },
       { name: "images", label: "Ảnh sản phẩm (ảnh đầu tiên là ảnh đại diện)", type: "images" },
@@ -199,6 +239,13 @@ export const resources: Resource[] = [
       { name: "category_id", label: "Danh mục", type: "relation", relation: "categories", side: true },
       { name: "brand_id", label: "Thương hiệu", type: "relation", relation: "brands", side: true },
       { name: "featured", label: "Sản phẩm nổi bật (hiện ở sidebar)", type: "boolean", side: true },
+      {
+        name: "track_stock",
+        label: "Theo dõi tồn kho (hiện Còn/Hết hàng trên web)",
+        type: "boolean",
+        side: true,
+        help: "Tự bật khi sản phẩm có phiếu nhập hoặc kiểm kho",
+      },
       { name: "sort_order", label: "Thứ tự (nhỏ lên trước)", type: "number", side: true, default: 0 },
       ...SEO,
     ],
@@ -400,6 +447,153 @@ export const resources: Resource[] = [
       { name: "sort_order", label: "Thứ tự", type: "number", side: true, default: 0 },
     ],
   },
+];
+
+resources.push(
+  {
+    key: "purchase_orders",
+    label: "Phiếu nhập hàng",
+    singular: "phiếu nhập",
+    group: "Kho hàng",
+    titleField: "code",
+    searchColumns: ["code", "note"],
+    defaultOrder: [{ column: "ordered_at", ascending: false }, { column: "created_at", ascending: false }],
+    canDelete: true,
+    filters: [
+      { name: "status", label: "Trạng thái", options: PURCHASE_STATUS },
+      { name: "supplier_id", label: "Nhà cung cấp", relation: "suppliers" },
+    ],
+    columns: [
+      { name: "code", label: "Mã phiếu" },
+      { name: "supplier_id", label: "Nhà cung cấp", type: "relation", relation: "suppliers" },
+      { name: "total", label: "Tổng tiền", type: "money" },
+      { name: "paid_amount", label: "Đã trả", type: "money" },
+      { name: "status", label: "Trạng thái", type: "status" },
+      { name: "ordered_at", label: "Ngày", type: "date" },
+    ],
+    fields: [
+      { name: "items", label: "Hàng nhập", type: "po_items", help: "Giá nhập chưa gồm phí ship; phí ship và chiết khấu được phân bổ vào giá vốn theo giá trị từng dòng." },
+      { name: "note", label: "Ghi chú", type: "textarea" },
+      { name: "code", label: "Mã phiếu", type: "readonly", side: true, help: "Tự tạo khi lưu" },
+      {
+        name: "status",
+        label: "Trạng thái",
+        type: "select",
+        options: PURCHASE_STATUS,
+        side: true,
+        default: "draft",
+        help: "Chọn “Đã nhập kho” và lưu để cộng tồn kho. Phiếu đã nhập chỉ có thể huỷ (tồn kho được trừ lại).",
+      },
+      { name: "supplier_id", label: "Nhà cung cấp", type: "relation", relation: "suppliers", side: true },
+      { name: "ordered_at", label: "Ngày nhập", type: "date", side: true },
+      { name: "subtotal", label: "Tiền hàng", type: "readonly", format: "money", side: true },
+      { name: "shipping_fee", label: "Phí vận chuyển (₫)", type: "money", side: true },
+      { name: "discount", label: "Chiết khấu (₫)", type: "money", side: true },
+      { name: "total", label: "Tổng phải trả", type: "readonly", format: "money", side: true },
+      { name: "paid_amount", label: "Đã thanh toán (₫)", type: "money", side: true },
+      { name: "received_at", label: "Thời điểm nhập kho", type: "readonly", format: "datetime", side: true },
+    ],
+  },
+  {
+    key: "suppliers",
+    label: "Nhà cung cấp",
+    singular: "nhà cung cấp",
+    group: "Kho hàng",
+    titleField: "name",
+    searchColumns: ["name", "phone", "contact_name"],
+    defaultOrder: [{ column: "name" }],
+    columns: [
+      { name: "name", label: "Tên" },
+      { name: "contact_name", label: "Người liên hệ" },
+      { name: "phone", label: "SĐT" },
+      { name: "active", label: "Đang giao dịch", type: "boolean" },
+    ],
+    fields: [
+      { name: "name", label: "Tên nhà cung cấp", type: "text", required: true },
+      { name: "contact_name", label: "Người liên hệ", type: "text", width: "half" },
+      { name: "phone", label: "Số điện thoại", type: "text", width: "half" },
+      { name: "email", label: "Email", type: "text", width: "half" },
+      { name: "tax_code", label: "Mã số thuế", type: "text", width: "half" },
+      { name: "address", label: "Địa chỉ", type: "text" },
+      { name: "bank_account", label: "Tài khoản ngân hàng", type: "text" },
+      { name: "note", label: "Ghi chú", type: "textarea" },
+      { name: "active", label: "Đang giao dịch", type: "boolean", side: true, default: true },
+    ],
+  },
+  {
+    key: "stock_movements",
+    label: "Thẻ kho",
+    singular: "phát sinh kho",
+    group: "Kho hàng",
+    titleField: "product_name",
+    readOnly: true,
+    canCreate: false,
+    searchColumns: ["product_name", "ref_code", "note"],
+    defaultOrder: [{ column: "created_at", ascending: false }],
+    filters: [
+      { name: "type", label: "Loại", options: MOVEMENT_TYPES },
+      { name: "product_id", label: "Sản phẩm", relation: "products" },
+    ],
+    columns: [
+      { name: "created_at", label: "Thời gian", type: "datetime" },
+      { name: "product_name", label: "Sản phẩm" },
+      { name: "type", label: "Loại", type: "status" },
+      { name: "qty", label: "SL", type: "signed" },
+      { name: "stock_after", label: "Tồn sau", type: "number" },
+      { name: "unit_cost", label: "Đơn giá vốn", type: "money" },
+      { name: "ref_code", label: "Chứng từ" },
+    ],
+    fields: [
+      { name: "product_name", label: "Sản phẩm", type: "readonly" },
+      { name: "type", label: "Loại", type: "readonly" },
+      { name: "qty", label: "Số lượng", type: "readonly", format: "number" },
+      { name: "stock_after", label: "Tồn sau", type: "readonly", format: "number" },
+      { name: "unit_cost", label: "Đơn giá vốn", type: "readonly", format: "money" },
+      { name: "ref_code", label: "Chứng từ", type: "readonly" },
+      { name: "note", label: "Ghi chú", type: "readonly" },
+      { name: "created_at", label: "Thời gian", type: "readonly", format: "datetime" },
+    ],
+  },
+  {
+    key: "price_history",
+    label: "Lịch sử giá",
+    singular: "thay đổi giá",
+    group: "Kho hàng",
+    titleField: "product_name",
+    readOnly: true,
+    canCreate: false,
+    searchColumns: ["product_name", "note"],
+    defaultOrder: [{ column: "created_at", ascending: false }],
+    filters: [{ name: "source", label: "Nguồn", options: PRICE_SOURCES }],
+    columns: [
+      { name: "created_at", label: "Thời gian", type: "datetime" },
+      { name: "product_name", label: "Sản phẩm" },
+      { name: "old_price", label: "Giá cũ", type: "money" },
+      { name: "new_price", label: "Giá mới", type: "money" },
+      { name: "new_cost_price", label: "Giá vốn", type: "money" },
+      { name: "source", label: "Nguồn", type: "status" },
+      { name: "note", label: "Ghi chú" },
+    ],
+    fields: [
+      { name: "product_name", label: "Sản phẩm", type: "readonly" },
+      { name: "old_price", label: "Giá bán cũ", type: "readonly", format: "money", width: "half" },
+      { name: "new_price", label: "Giá bán mới", type: "readonly", format: "money", width: "half" },
+      { name: "old_compare_at_price", label: "Giá gốc cũ", type: "readonly", format: "money", width: "half" },
+      { name: "new_compare_at_price", label: "Giá gốc mới", type: "readonly", format: "money", width: "half" },
+      { name: "old_cost_price", label: "Giá vốn cũ", type: "readonly", format: "money", width: "half" },
+      { name: "new_cost_price", label: "Giá vốn mới", type: "readonly", format: "money", width: "half" },
+      { name: "note", label: "Ghi chú", type: "readonly" },
+      { name: "created_at", label: "Thời gian", type: "readonly", format: "datetime" },
+    ],
+  },
+);
+
+/** Hand-built admin pages shown in the sidebar next to the generic resources. */
+export const adminPages = [
+  { group: "Kho hàng", href: "/admin/inventory/", label: "Tồn kho" },
+  { group: "Kho hàng", href: "/admin/inventory/stocktake/", label: "Kiểm kho" },
+  { group: "Kho hàng", href: "/admin/pricing/", label: "Cập nhật giá hàng loạt" },
+  { group: "Báo cáo", href: "/admin/reports/", label: "Doanh thu & lợi nhuận" },
 ];
 
 export const getResource = (key: string) => resources.find((r) => r.key === key);

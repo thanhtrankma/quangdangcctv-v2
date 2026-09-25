@@ -4,11 +4,12 @@ import { useRef, useState } from "react";
 import { ArrowDown, ArrowUp, ImagePlus, Loader2, Plus, Trash2, X } from "lucide-react";
 import { uploadImage } from "@/app/admin/actions";
 import type { Field } from "@/lib/admin/config";
-import { formatPrice, PLACEHOLDER_IMG, slugify } from "@/lib/format";
-import type { OrderItem } from "@/lib/types";
+import { formatDateTime, formatPrice, PLACEHOLDER_IMG, slugify } from "@/lib/format";
+import type { OrderItem, PurchaseItem } from "@/lib/types";
+import { PoItemsInput, type ProductOption } from "./po-items";
 import { RichTextEditor } from "./rich-text";
 
-export type Options = Record<string, { value: string; label: string }[]>;
+export type Options = Record<string, { value: string; label: string; meta?: Record<string, unknown> }[]>;
 
 export const inputCls =
   "h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20";
@@ -267,7 +268,7 @@ export function FieldInput({
   options: Options;
   values: Record<string, unknown>;
 }) {
-  const wide = f.width !== "half" || ["richtext", "images", "list", "order_items"].includes(f.type);
+  const wide = f.width !== "half" || ["richtext", "images", "list", "order_items", "po_items"].includes(f.type);
   let control: React.ReactNode;
   switch (f.type) {
     case "textarea":
@@ -356,13 +357,32 @@ export function FieldInput({
     case "order_items":
       control = <OrderItems items={(value as OrderItem[]) ?? []} />;
       break;
-    case "readonly":
+    case "po_items":
       control = (
-        <div className="rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold">
-          {typeof value === "number" ? formatPrice(value) : String(value ?? "—")}
-        </div>
+        <PoItemsInput
+          value={Array.isArray(value) ? (value as PurchaseItem[]) : []}
+          onChange={onChange}
+          products={(options.products ?? []) as ProductOption[]}
+          locked={Boolean(values.__locked)}
+        />
       );
       break;
+    case "readonly": {
+      const empty = value === null || value === undefined || value === "";
+      const shown = empty
+        ? "—"
+        : f.format === "money"
+          ? formatPrice(Number(value))
+          : f.format === "number"
+            ? Number(value).toLocaleString("vi-VN")
+            : f.format === "datetime"
+              ? formatDateTime(String(value))
+              : typeof value === "number" && !f.format
+                ? formatPrice(value)
+                : String(value);
+      control = <div className="min-h-10 rounded-md bg-slate-100 px-3 py-2 text-sm font-semibold tabular-nums">{shown}</div>;
+      break;
+    }
     default:
       control = <input value={String(value ?? "")} onChange={(e) => onChange(e.target.value)} placeholder={f.placeholder} className={inputCls} />;
   }

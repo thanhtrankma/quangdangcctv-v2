@@ -4,7 +4,8 @@
  */
 import scraped from "./scraped.json";
 import type {
-  Banner, Brand, Category, ContactMessage, Order, Page, Post, PostCategory, Product, Settings, Video,
+  Banner, Brand, Category, ContactMessage, Order, Page, Post, PostCategory, PriceHistory, Product, PurchaseOrder, Settings,
+  StockMovement, Supplier, Video,
 } from "@/lib/types";
 
 const now = "2026-09-24T00:00:00.000Z";
@@ -125,6 +126,11 @@ export const seedTables = {
   videos: stamp(videos),
   orders: stamp(orders),
   contact_messages: stamp(contactMessages),
+  // Inventory & pricing (migration 002) – start empty.
+  suppliers: [] as Supplier[],
+  purchase_orders: [] as PurchaseOrder[],
+  stock_movements: [] as StockMovement[],
+  price_history: [] as PriceHistory[],
 };
 
 export type TableName = keyof typeof seedTables;

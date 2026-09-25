@@ -19,9 +19,10 @@ type Props = {
   backHref?: string;
   viewHref?: string | null;
   extraActions?: React.ReactNode;
+  readOnly?: boolean;
 };
 
-export function RecordForm({ fields, initial, options, resource, id, settingsGroup, backHref, viewHref, extraActions }: Props) {
+export function RecordForm({ fields, initial, options, resource, id, settingsGroup, backHref, viewHref, extraActions, readOnly }: Props) {
   const router = useRouter();
   const [values, setValues] = useState<Record<string, unknown>>(initial);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
@@ -38,6 +39,7 @@ export function RecordForm({ fields, initial, options, resource, id, settingsGro
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (readOnly) return;
     setMsg(null);
     start(async () => {
       const r = settingsGroup ? await saveSettings(settingsGroup, values) : await saveRecord(resource!, id ?? null, values);
@@ -50,15 +52,17 @@ export function RecordForm({ fields, initial, options, resource, id, settingsGro
   };
 
   const renderFields = (list: Field[]) =>
-    list.map((f) => (
+    list.map((f) => readOnly && f.type !== "po_items" && f.type !== "order_items" ? { ...f, type: "readonly" as const } : f).map((f) => (
       <FieldInput key={f.name} field={f} value={values[f.name]} onChange={(v) => set(f.name, v)} options={options} values={values} />
     ));
 
   const bar = (
     <div className="flex flex-wrap items-center gap-3">
-      <button disabled={pending} className="rounded-lg bg-teal-navy px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">
-        {pending ? "Đang lưu..." : "Lưu"}
-      </button>
+      {!readOnly && (
+        <button disabled={pending} className="rounded-lg bg-teal-navy px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">
+          {pending ? "Đang lưu..." : "Lưu"}
+        </button>
+      )}
       {backHref && (
         <Link href={backHref} className="text-sm text-slate-600 hover:underline">
           ← Quay lại danh sách

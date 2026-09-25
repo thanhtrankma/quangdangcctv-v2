@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { AdminSidebar } from "@/components/admin/sidebar";
-import { resources, settingsGroups } from "@/lib/admin/config";
+import { adminPages, resources, settingsGroups } from "@/lib/admin/config";
 import { usingDefaultPassword } from "@/lib/auth";
 import { getSettings } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/db";
@@ -10,9 +10,12 @@ export const dynamic = "force-dynamic";
 
 export default async function PanelLayout({ children }: { children: React.ReactNode }) {
   const { general } = await getSettings();
-  const groups = [...new Set(resources.map((r) => r.group))].map((g) => ({
+  const groups = [...new Set([...resources.map((r) => r.group), ...adminPages.map((p) => p.group)])].map((g) => ({
     title: g,
-    items: resources.filter((r) => r.group === g).map((r) => ({ href: `/admin/${r.key}/`, label: r.label })),
+    items: [
+      ...adminPages.filter((p) => p.group === g).map(({ href, label }) => ({ href, label })),
+      ...resources.filter((r) => r.group === g).map((r) => ({ href: `/admin/${r.key}/`, label: r.label })),
+    ],
   }));
   groups.push({
     title: "Giao diện & cài đặt",

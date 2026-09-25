@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CreditCard, Headset, MessageCircle, Phone, RefreshCcw, ShieldCheck, Truck, Wrench, type LucideIcon } from "lucide-react";
+import {
+  CheckCircle2, CircleAlert, CreditCard, Headset, MessageCircle, Phone, RefreshCcw, ShieldCheck, Truck, Wrench, type LucideIcon,
+} from "lucide-react";
 import { BuyBox, ExpandableDescription, Gallery } from "@/components/site/product-detail-client";
 import { Breadcrumb, cartItemOf, discountOf, PriceTag, ProductGrid, RichContent } from "@/components/site/ui";
 import { categoryChain, categoryHref, getBrands, getCategories, getProductBySlug, getProducts, getSettings } from "@/lib/data";
@@ -40,7 +42,15 @@ export default async function ProductPage({ params }: Props) {
     image: p.images,
     description: stripHtml(p.short_description || "").slice(0, 300),
     brand: brand ? { "@type": "Brand", name: brand.name } : undefined,
-    offers: p.price > 0 ? { "@type": "Offer", priceCurrency: "VND", price: p.price, availability: "https://schema.org/InStock" } : undefined,
+    offers:
+      p.price > 0
+        ? {
+            "@type": "Offer",
+            priceCurrency: "VND",
+            price: p.price,
+            availability: p.track_stock && (p.stock ?? 0) <= 0 ? "https://schema.org/BackOrder" : "https://schema.org/InStock",
+          }
+        : undefined,
   };
 
   return (
@@ -64,6 +74,12 @@ export default async function ProductPage({ params }: Props) {
             {off > 0 && (
               <p className="mt-1 text-sm font-medium text-trust">
                 Tiết kiệm {formatPrice(saved)} ({off}%)
+              </p>
+            )}
+            {p.track_stock && (
+              <p className={`mt-2 flex items-center gap-1.5 text-sm font-medium ${(p.stock ?? 0) > 0 ? "text-trust" : "text-cta"}`}>
+                {(p.stock ?? 0) > 0 ? <CheckCircle2 size={16} aria-hidden="true" /> : <CircleAlert size={16} aria-hidden="true" />}
+                {(p.stock ?? 0) > 0 ? "Còn hàng" : "Tạm hết hàng – liên hệ để đặt trước"}
               </p>
             )}
             {p.variant_label && (

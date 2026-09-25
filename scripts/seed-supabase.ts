@@ -45,6 +45,7 @@ async function main() {
 
   for (const t of TABLES) {
     const rows = tables[t] as object[];
+    if (!rows.length) continue; // nothing to seed (e.g. inventory tables start empty)
     for (let i = 0; i < rows.length; i += 200) {
       const { error } = await sb.from(t).upsert(rows.slice(i, i + 200), { onConflict: "id", ignoreDuplicates: !reset });
       if (error) throw new Error(`${t}: ${error.message}`);

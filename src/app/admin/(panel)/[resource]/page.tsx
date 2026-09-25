@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DeleteButton } from "@/components/admin/delete-button";
-import { CONTACT_STATUS, getResource, ORDER_STATUS, type Column } from "@/lib/admin/config";
+import { CONTACT_STATUS, getResource, MOVEMENT_TYPES, ORDER_STATUS, PRICE_SOURCES, PURCHASE_STATUS, type Column } from "@/lib/admin/config";
 import { db, type TableName } from "@/lib/db";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/format";
 
@@ -21,19 +21,29 @@ const STATUS_STYLE: Record<string, string> = {
   cancelled: "bg-red-100 text-red-800",
   read: "bg-blue-100 text-blue-800",
   done: "bg-emerald-100 text-emerald-800",
+  received: "bg-emerald-100 text-emerald-800",
+  purchase: "bg-emerald-100 text-emerald-800",
+  purchase_cancel: "bg-red-100 text-red-800",
+  sale: "bg-blue-100 text-blue-800",
+  sale_return: "bg-amber-100 text-amber-800",
+  adjustment: "bg-slate-200 text-slate-700",
+  manual: "bg-slate-200 text-slate-700",
+  bulk: "bg-indigo-100 text-indigo-800",
 };
 const STATUS_LABEL: Record<string, string> = {
   published: "Hiển thị",
   draft: "Nháp",
-  ...Object.fromEntries([...ORDER_STATUS, ...CONTACT_STATUS].map((s) => [s.value, s.label])),
+  ...Object.fromEntries(
+    [...ORDER_STATUS, ...CONTACT_STATUS, ...PURCHASE_STATUS, ...MOVEMENT_TYPES, ...PRICE_SOURCES].map((s) => [s.value, s.label]),
+  ),
 };
 
 async function relationMaps(columns: Column[], filters: { relation?: TableName }[] = []) {
   const tables = [...new Set([...columns.map((c) => c.relation), ...filters.map((f) => f.relation)].filter(Boolean))] as TableName[];
   const entries = await Promise.all(
     tables.map(async (t) => {
-      const { rows } = await db().list<{ id: string; name?: string; title?: string }>(t, { order: [{ column: "name" }] });
-      return [t, rows.map((r) => ({ value: r.id, label: r.name ?? r.title ?? r.id }))] as const;
+      const { rows } = await db().list<{ id: string; name?: string }>(t, { columns: ["id", "name"], order: [{ column: "name" }] });
+      return [t, rows.map((r) => ({ value: r.id, label: r.name ?? r.id }))] as const;
     }),
   );
   return Object.fromEntries(entries) as Record<string, { value: string; label: string }[]>;
@@ -77,7 +87,24 @@ export default async function ResourceList({ params, searchParams }: Props) {
         );
       }
       case "money":
-        return v === null || v === undefined ? "—" : formatPrice(v as number);
+        return v === null || v === undefined ? "—" : <span className="tabular-nums">{formatPrice(v as number)}</span>;
+      case "number":
+        return <span className="tabular-nums">{Number(v ?? 0).toLocaleString("vi-VN")}</span>;
+      case "signed": {
+        const x = Number(v ?? 0);
+        return <span className={`font-semibold tabular-nums ${x > 0 ? "text-emerald-700" : x < 0 ? "text-red-700" : ""}`}>{x > 0 ? `+${x}` : x}</span>;
+      }
+      case "stock": {
+        if (!row.track_stock) return <span className="text-slate-400">—</span>;
+        const x = Number(v ?? 0);
+        const low = x <= Number(row.low_stock_threshold ?? 2);
+        return (
+          <span className={`inline-flex items-center gap-1 font-semibold tabular-nums ${x <= 0 ? "text-red-700" : low ? "text-amber-700" : "text-slate-800"}`}>
+            {x}
+            {x <= 0 ? <span className="text-xs font-normal">hết</span> : low ? <span className="text-xs font-normal">sắp hết</span> : null}
+          </span>
+        );
+      }
       case "boolean":
         return v ? <span className="text-emerald-600">✓</span> : <span className="text-slate-300">—</span>;
       case "relation":
@@ -163,14 +190,16 @@ export default async function ResourceList({ params, searchParams }: Props) {
                 ))}
                 <td className="px-4 py-2 text-right whitespace-nowrap">
                   <Link href={`/admin/${res.key}/${row.id}/`} className="mr-3 text-teal-700 hover:underline">
-                    Sửa
+                    {res.readOnly ? "Xem" : "Sửa"}
                   </Link>
                   {res.viewPath && (
                     <a href={res.viewPath(row) ?? "#"} target="_blank" className="mr-3 text-slate-500 hover:underline">
                       Xem
                     </a>
                   )}
-                  <DeleteButton resource={res.key} id={row.id} label={String(row[res.titleField] ?? "")} />
+                  {!res.readOnly && res.canDelete !== false && (
+                    <DeleteButton resource={res.key} id={row.id} label={String(row[res.titleField] ?? "")} />
+                  )}
                 </td>
               </tr>
             ))}

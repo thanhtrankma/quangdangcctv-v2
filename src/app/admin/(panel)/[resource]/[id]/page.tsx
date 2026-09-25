@@ -18,7 +18,10 @@ export default async function EditRecord({ params }: Props) {
   if (!isNew && !row) notFound();
   // Categories can't pick themselves as parent.
   const options = await loadRelationOptions(res.fields, isNew ? undefined : id);
-  const initial = { ...defaultsFor(res.fields), ...(row ?? {}) };
+  const initial: Record<string, unknown> = { ...defaultsFor(res.fields), ...(row ?? {}) };
+  // Purchase orders: goods can't be edited once the stock has moved.
+  if (res.key === "purchase_orders" && row && row.status !== "draft") initial.__locked = true;
+  if (res.key === "purchase_orders" && row?.status === "cancelled") initial.__readonly = true;
   const title = isNew ? `Thêm ${res.singular}` : String(row?.[res.titleField] ?? res.singular);
 
   return (
@@ -34,8 +37,13 @@ export default async function EditRecord({ params }: Props) {
         id={isNew ? null : id}
         backHref={`/admin/${res.key}/`}
         viewHref={!isNew && row && res.viewPath ? res.viewPath(row) : null}
+        readOnly={res.readOnly || Boolean(initial.__readonly)}
         extraActions={
-          !isNew && (
+          !isNew &&
+          !res.readOnly &&
+          res.canDelete !== false &&
+          !(res.key === "purchase_orders" && row?.status === "received") &&
+          !(res.key === "orders" && row?.stock_deducted) && (
             <DeleteButton
               resource={res.key}
               id={id}

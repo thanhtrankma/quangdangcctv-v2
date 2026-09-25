@@ -47,6 +47,12 @@ export interface Product extends BaseRow {
   sort_order: number;
   seo_title?: string;
   seo_description?: string;
+  /** Inventory & pricing (migration 002). Optional so older rows / the mock DB still type-check. */
+  cost_price?: number;
+  wholesale_price?: number | null;
+  stock?: number;
+  low_stock_threshold?: number;
+  track_stock?: boolean;
 }
 
 export interface Banner extends BaseRow {
@@ -114,6 +120,8 @@ export interface OrderItem {
   price: number;
   qty: number;
   image: string;
+  /** Unit cost snapshot taken when stock was deducted (for gross profit). */
+  cost?: number;
 }
 
 export type OrderStatus = "new" | "confirmed" | "shipping" | "completed" | "cancelled";
@@ -131,6 +139,73 @@ export interface Order extends BaseRow {
   total: number;
   status: OrderStatus;
   admin_note: string;
+  stock_deducted?: boolean;
+  cost_total?: number;
+}
+
+export interface Supplier extends BaseRow {
+  name: string;
+  contact_name: string;
+  phone: string;
+  email: string;
+  address: string;
+  tax_code: string;
+  bank_account: string;
+  note: string;
+  active: boolean;
+}
+
+export interface PurchaseItem {
+  product_id: string;
+  name: string;
+  sku: string;
+  qty: number;
+  unit_cost: number;
+}
+
+export type PurchaseStatus = "draft" | "received" | "cancelled";
+
+export interface PurchaseOrder extends BaseRow {
+  code: string;
+  supplier_id: string | null;
+  status: PurchaseStatus;
+  items: PurchaseItem[];
+  subtotal: number;
+  shipping_fee: number;
+  discount: number;
+  total: number;
+  paid_amount: number;
+  ordered_at: string;
+  received_at: string | null;
+  note: string;
+}
+
+export type StockMovementType = "purchase" | "purchase_cancel" | "sale" | "sale_return" | "adjustment";
+
+export interface StockMovement extends BaseRow {
+  product_id: string;
+  product_name: string;
+  type: StockMovementType;
+  qty: number;
+  stock_after: number;
+  unit_cost: number;
+  ref_type: string;
+  ref_id: string;
+  ref_code: string;
+  note: string;
+}
+
+export interface PriceHistory extends BaseRow {
+  product_id: string;
+  product_name: string;
+  old_price: number | null;
+  new_price: number | null;
+  old_compare_at_price: number | null;
+  new_compare_at_price: number | null;
+  old_cost_price: number | null;
+  new_cost_price: number | null;
+  source: "manual" | "bulk" | "purchase";
+  note: string;
 }
 
 export interface ContactMessage extends BaseRow {

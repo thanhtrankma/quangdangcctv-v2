@@ -1,7 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { seedSettings } from "@/data/seed";
 import type { Settings, SettingsKey } from "@/lib/types";
-import type { Query, Repo, TableName } from "./types";
+import type { Query, Repo, StockMoveInput, TableName } from "./types";
 
 let client: SupabaseClient | null = null;
 
@@ -26,7 +26,9 @@ export const supabaseRepo: Repo = {
   async list<T>(table: TableName, q: Query = {}) {
     // limit: 0 means "count only".
     const head = q.limit === 0;
-    let query = supabaseAdmin().from(table).select("*", { count: "exact", head });
+    let query = supabaseAdmin()
+      .from(table)
+      .select(q.columns?.join(",") || "*", { count: "exact", head });
     for (const [col, val] of Object.entries(q.where ?? {})) {
       if (Array.isArray(val)) query = query.in(col, val);
       else if (val === null) query = query.is(col, null);
@@ -43,7 +45,7 @@ export const supabaseRepo: Repo = {
     }
     const { data, error, count } = await query;
     fail(error);
-    return { rows: (data ?? []) as T[], count: count ?? 0 };
+    return { rows: (data ?? []) as unknown as T[], count: count ?? 0 };
   },
   async get<T>(table: TableName, id: string) {
     const { data, error } = await supabaseAdmin().from(table).select("*").eq("id", id).maybeSingle();
@@ -88,5 +90,19 @@ export const supabaseRepo: Repo = {
       .from("settings")
       .upsert({ key, value, updated_at: new Date().toISOString() });
     fail(error);
+  },
+  async stockMove(m: StockMoveInput) {
+    const { data, error } = await supabaseAdmin().rpc("apply_stock_movement", {
+      p_product_id: m.productId,
+      p_qty: m.qty,
+      p_type: m.type,
+      p_unit_cost: m.unitCost ?? null,
+      p_ref_type: m.refType ?? "",
+      p_ref_id: m.refId ?? "",
+      p_ref_code: m.refCode ?? "",
+      p_note: m.note ?? "",
+    });
+    fail(error);
+    return data as number;
   },
 };

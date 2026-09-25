@@ -1,4 +1,4 @@
--- Dolphin House schema. Run once in Supabase → SQL Editor, then `npm run db:seed`.
+-- Base schema. Run once in Supabase → SQL Editor, then every file in supabase/migrations/ in order, then `npm run db:seed`.
 -- All reads/writes go through the Next.js server using the secret key, so RLS is enabled
 -- with no public policies (the anon/publishable key cannot read or write anything).
 

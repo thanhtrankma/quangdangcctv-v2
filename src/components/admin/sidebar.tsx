@@ -11,6 +11,11 @@ type Group = { title: string; items: { href: string; label: string }[] };
 export function AdminSidebar({ groups, siteName }: { groups: Group[]; siteName: string }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  // Longest matching link wins, so /admin/inventory/stocktake/ doesn't also light up /admin/inventory/.
+  const activeHref = groups
+    .flatMap((g) => g.items.map((i) => i.href))
+    .filter((h) => (pathname.endsWith("/") ? pathname : `${pathname}/`).startsWith(h))
+    .sort((x, y) => y.length - x.length)[0];
   const link = (href: string, active: boolean) =>
     `flex items-center gap-2 rounded-md px-3 py-2 text-[14px] transition ${
       active ? "bg-white/15 font-semibold text-white" : "text-slate-300 hover:bg-white/10 hover:text-white"
@@ -41,7 +46,7 @@ export function AdminSidebar({ groups, siteName }: { groups: Group[]; siteName: 
             <div key={g.title}>
               <div className="px-3 pb-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{g.title}</div>
               {g.items.map((it) => (
-                <Link key={it.href} href={it.href} className={link(it.href, pathname.startsWith(it.href.replace(/\/$/, "")))}>
+                <Link key={it.href} href={it.href} className={link(it.href, it.href === activeHref)}>
                   {it.label}
                 </Link>
               ))}
