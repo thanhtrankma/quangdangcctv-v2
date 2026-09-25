@@ -12,7 +12,7 @@ const stamp = <T extends object>(rows: T[]) => rows.map((r) => ({ created_at: no
 
 export const seedSettings: Settings = {
   general: {
-    site_name: "QuangDang CCTV",
+    site_name: "SmartHomeHP",
     logo: "/assets/images/site/quangdang-cctv-logo.svg",
     favicon: "/assets/favicon/favicon.svg",
     hotline: "0917799091",
@@ -24,9 +24,9 @@ export const seedSettings: Settings = {
     facebook_url: "https://www.facebook.com/minhhiepprotech2016",
     youtube_url: "",
     messenger_url: "https://www.facebook.com/minhhiepprotech2016",
-    seo_title: "QuangDang CCTV | Camera an ninh, bộ lưu điện, máy tính, thiết bị mạng",
+    seo_title: "SmartHomeHP | Camera an ninh, bộ lưu điện, máy tính, thiết bị mạng",
     seo_description:
-      "QuangDang CCTV cung cấp và lắp đặt camera an ninh Hikvision, Ezviz, thiết bị mạng, bộ lưu điện UPS, máy tính và giải pháp công nghệ tại Hải Phòng và toàn miền Bắc.",
+      "SmartHomeHP cung cấp và lắp đặt camera an ninh Hikvision, Ezviz, thiết bị mạng, bộ lưu điện UPS, máy tính và giải pháp công nghệ tại Hải Phòng và toàn miền Bắc.",
     og_image: "/assets/images/site/quangdang-cctv-logo.svg",
     ga_id: "",
   },
@@ -47,10 +47,10 @@ export const seedSettings: Settings = {
     ],
   },
   home: {
-    heading: "QuangDang CCTV – Camera an ninh, thiết bị mạng & giải pháp công nghệ",
+    heading: "SmartHomeHP – Camera an ninh, thiết bị mạng & giải pháp công nghệ",
     intro:
       "Camera Hikvision, Ezviz, wifi, bộ lưu điện, máy tính và thiết bị điện máy chính hãng — tư vấn, lắp đặt trọn gói tại Hải Phòng và toàn miền Bắc.",
-    menu_eyebrow: "Danh mục QuangDang CCTV",
+    menu_eyebrow: "Danh mục SmartHomeHP",
     menu_title: "Chọn theo nhu cầu",
     brands_title: "Thương hiệu phân phối",
     brands_subtitle: "Hàng chính hãng, bảo hành theo tiêu chuẩn của hãng.",
@@ -60,12 +60,12 @@ export const seedSettings: Settings = {
     faqs: scraped.home_faqs,
   },
   footer: {
-    contact_title: "QuangDang CCTV",
+    contact_title: "SmartHomeHP",
     contact_html:
       "Địa chỉ: 79 Phương Lưu, Đông Hải 1, Hải An, Hải Phòng<br>Hotline: 0917 799 091 (Quốc Khánh)<br>Zalo bán hàng: 0772 236 529 · 0981 791 129 · 0936 921 299<br>Giao hàng toàn quốc – trả tiền sau (COD)",
     columns: [
       {
-        title: "Về QuangDang CCTV",
+        title: "Về SmartHomeHP",
         links: [
           { label: "Giới thiệu", href: "/gioi-thieu/" },
           { label: "Địa chỉ công ty", href: "/dia-chi-cong-ty/" },
@@ -89,7 +89,7 @@ export const seedSettings: Settings = {
     map_title: "Bản đồ",
     map_image: "",
     map_url: "https://maps.app.goo.gl/kurNK7z9deiqACcb9",
-    copyright: "Copyright © 2026 QuangDang CCTV - All Rights Reserved.",
+    copyright: "Copyright © 2026 SmartHomeHP - All Rights Reserved.",
   },
   product_page: {
     buy_now_text: "ĐẶT HÀNG NGAY",

@@ -6,7 +6,7 @@
 
 ---
 
-**Project:** QuangDang CCTV
+**Project:** SmartHomeHP
 **Generated:** 2026-09-24 11:26:22
 **Category:** Insurance Platform
 
@@ -214,7 +214,7 @@ Before delivering any UI code, verify:
 - [ ] No content hidden behind fixed navbars
 - [ ] No horizontal scroll on mobile
 
-## Project Overrides (QuangDang CCTV – decided on top of the generated system)
+## Project Overrides (SmartHomeHP – decided on top of the generated system)
 
 Generated with ui-ux-pro-max: `"security surveillance technology trust professional" --design-system` (first query
 "security camera CCTV electronics ecommerce store" returned a generic green e-commerce palette and was rejected).

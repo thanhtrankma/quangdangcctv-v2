@@ -1,12 +1,12 @@
-# QuangDang CCTV v2 – giao diện mới
+# SmartHomeHP v2 – giao diện mới
 
 Bản v2 dùng **chung backend và dữ liệu** với project `dolphinhouse` (cùng Supabase, cùng trang admin `/admin`),
 chỉ thay giao diện khách. Design system tạo bằng skill ui-ux-pro-max, xem `design-system/quangdang-cctv/MASTER.md`
 (màu, font, quy tắc tương phản, thứ tự các khối trang chủ).
 
-# QuangDang CCTV – Next.js + Tailwind + Supabase
+# SmartHomeHP – Next.js + Tailwind + Supabase
 
-Website bán hàng kèm trang quản trị `/admin` để quản lý toàn bộ nội dung. Khung giao diện dựng từ dolphinhouse.vn; dữ liệu hiện tại được nhập từ minhhiepcctv.vn và đổi tên thương hiệu thành "QuangDang CCTV".
+Website bán hàng kèm trang quản trị `/admin` để quản lý toàn bộ nội dung. Khung giao diện dựng từ dolphinhouse.vn; dữ liệu hiện tại được nhập từ minhhiepcctv.vn và đổi tên thương hiệu thành "SmartHomeHP".
 
 ## Chạy local
 

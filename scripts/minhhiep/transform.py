@@ -1,6 +1,6 @@
 """Step 2 of the minhhiepcctv.vn import: raw.json -> src/data/scraped.json (the app's seed data),
 downloading every referenced image into scripts/minhhiep/images/ (uploaded by upload-images.ts).
-Also renames the brand to "QuangDang CCTV" in all text.
+Also renames the brand to "SmartHomeHP" in all text.
 Run: python3 scripts/minhhiep/transform.py"""
 import html, json, os, pathlib, re, subprocess, sys, urllib.parse, urllib.request
 from concurrent.futures import ThreadPoolExecutor
@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 HERE = pathlib.Path(__file__).parent
 ROOT = HERE.parent.parent
 IMG_DIR = HERE / "images"
-BRAND = "QuangDang CCTV"
+BRAND = "SmartHomeHP"
 BUCKET = os.environ.get("SUPABASE_STORAGE_BUCKET", "media")
 SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
 if not SUPABASE_URL:
