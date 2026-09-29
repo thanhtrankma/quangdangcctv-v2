@@ -35,7 +35,7 @@ export async function PostList({ title, basePath, page, categoryId }: { title: s
           ))}
         </ul>
       </nav>
-      <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0">
           {!first ? (
             <p className="rounded-xl border border-dashed border-border bg-white p-10 text-center text-muted">Chưa có bài viết trong chuyên mục này.</p>

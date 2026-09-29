@@ -71,7 +71,7 @@ export default async function SlugPage({ params }: Props) {
     return (
       <div className="container-x">
         <Breadcrumb items={[{ label: page.title }]} />
-        <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <article className="min-w-0 rounded-2xl border border-border bg-white p-5 md:p-10">
             <h1 className="mb-6 text-[28px] leading-tight font-bold md:text-4xl">{page.title}</h1>
             {isContact ? (
@@ -133,7 +133,7 @@ export default async function SlugPage({ params }: Props) {
   return (
     <div className="container-x">
       <Breadcrumb items={[{ label: "Tin tức", href: "/tin-tuc/" }, ...(cat ? [{ label: cat.name, href: `/danh-muc-tin-tuc/${cat.slug}/` }] : []), { label: post.title }]} />
-      <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <article className="min-w-0 rounded-2xl border border-border bg-white p-5 md:p-10">
           <header className="mx-auto max-w-3xl">
             {cat && (

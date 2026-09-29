@@ -55,7 +55,7 @@ export function CheckoutClient({ siteName }: { siteName: string }) {
   }
 
   return (
-    <form action={action} className="grid gap-6 lg:grid-cols-[1fr_400px]">
+    <form action={action} className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
       <input type="hidden" name="items" value={JSON.stringify(items.map(({ slug, variant, qty }) => ({ slug, variant, qty })))} />
       <div className="hidden" aria-hidden="true">
         <input type="text" name="_hp" tabIndex={-1} autoComplete="off" />

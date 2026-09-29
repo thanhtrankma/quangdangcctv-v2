@@ -57,7 +57,7 @@ export default async function ProductPage({ params }: Props) {
     <div className="container-x">
       <Breadcrumb items={[...(cat ? categoryChain(cats, cat).map((c) => ({ label: c.name, href: categoryHref(cats, c) })) : []), { label: p.name }]} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px] [&>*]:min-w-0">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px] [&>*]:min-w-0">
         <Gallery images={p.images ?? []} alt={p.name} />
 
         <div>

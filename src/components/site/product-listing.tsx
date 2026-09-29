@@ -45,8 +45,8 @@ export async function ProductListing({
   const activeBrand = brands.find((b) => b.id === sp.brand);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[250px_1fr]">
-      <aside className="space-y-5 lg:sticky lg:top-36 lg:self-start" aria-label="Bộ lọc">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[250px_minmax(0,1fr)]">
+      <aside className="min-w-0 space-y-5 lg:sticky lg:top-36 lg:self-start" aria-label="Bộ lọc">
         {sideLinks.length > 0 && (
           <nav aria-label={sideTitle ?? "Danh mục"} className="rounded-xl border border-border bg-white p-4">
             <h2 className="mb-2 font-heading text-base font-semibold">{sideTitle ?? "Danh mục"}</h2>
@@ -56,8 +56,9 @@ export async function ProductListing({
                   <Link
                     href={l.href}
                     aria-current={l.active ? "page" : undefined}
-                    style={{ paddingLeft: l.depth ? `${0.75 + l.depth * 0.85}rem` : undefined }}
-                    className={`flex min-h-10 items-center rounded-lg px-3 text-[15px] whitespace-nowrap transition-colors duration-150 lg:whitespace-normal ${
+                    // Tree indent only in the desktop sidebar; on phones these are a single row of chips.
+                    style={{ "--indent": `${0.75 + (l.depth ?? 0) * 0.85}rem` } as React.CSSProperties}
+                    className={`flex min-h-10 items-center rounded-lg px-3 text-[15px] whitespace-nowrap transition-colors duration-150 lg:pl-[var(--indent)] lg:whitespace-normal ${
                       l.active ? "bg-primary-soft font-semibold text-primary" : "border border-border text-body hover:bg-tint lg:border-0"
                     }`}
                   >

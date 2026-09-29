@@ -22,7 +22,7 @@ export function CartPageClient() {
   }
   const step = "grid h-10 w-10 place-items-center transition-colors duration-150 hover:bg-tint disabled:opacity-40";
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
       <ul className="divide-y divide-border rounded-2xl border border-border bg-white">
         {items.map((i) => (
           <li key={i.slug + i.variant} className="flex flex-wrap items-center gap-4 p-4 sm:flex-nowrap">

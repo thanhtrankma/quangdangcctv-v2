@@ -11,7 +11,7 @@ export default async function VideosPage() {
   return (
     <div className="container-x">
       <Breadcrumb items={[{ label: "Videos" }]} />
-      <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         <div>
           <PageTitle>Videos</PageTitle>
           {videos.length === 0 && <p className="rounded-xl border border-dashed border-border bg-white p-10 text-center text-muted">Chưa có video nào.</p>}

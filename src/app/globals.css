@@ -57,6 +57,8 @@
     font-family: var(--font-heading);
     color: var(--color-ink);
     text-wrap: balance;
+    /* Product names like "P2424HT(23.8 INCH/FHD/IPS/…)" have no spaces to break on. */
+    overflow-wrap: anywhere;
   }
   a, button, [role="button"], summary, select, label[for] {
     cursor: pointer;
