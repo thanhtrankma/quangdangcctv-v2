@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Clock, MapPin, Phone, Search } from "lucide-react";
 import { categoryHref, getCategories, getSettings } from "@/lib/data";
 import { HeaderCart } from "./cart";
+import { Img } from "./img";
 import { MainNav, type NavCategory } from "./main-nav";
 
 export async function SiteHeader() {
@@ -35,8 +36,7 @@ export async function SiteHeader() {
       <header className="sticky top-0 z-40 border-b border-border bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85">
         <div className="container-x flex min-h-[72px] items-center gap-3 md:gap-6">
           <Link href="/" className="shrink-0" aria-label={`${general.site_name} – Trang chủ`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={general.logo} alt={general.site_name} width={176} height={55} className="h-11 w-auto md:h-[52px]" />
+            <Img src={general.logo} alt={general.site_name} width={176} height={55} loading="eager" className="h-11 w-auto md:h-[52px]" />
           </Link>
 
           <form action="/cua-hang/" method="get" role="search" className="relative hidden flex-1 md:block">

@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 import { formatDate, formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
-import type { Faq, Post, Product } from "@/lib/types";
+import type { PostCardData, ProductCardData } from "@/lib/data";
+import type { Faq, Product } from "@/lib/types";
 import { AddToCartIconButton } from "./cart";
 import { FaqItem } from "./faq-item";
+import { Img } from "./img";
 
-export function cartItemOf(p: Product) {
+export function cartItemOf(p: ProductCardData) {
   return { slug: p.slug, name: p.name, variant: p.variant_label ?? "", price: p.price, image: p.images?.[0] ?? "" };
 }
 
@@ -65,7 +67,7 @@ export function PriceTag({ p, size = "md" }: { p: Pick<Product, "price" | "compa
   );
 }
 
-export function ProductCard({ p, priority = false }: { p: Product; priority?: boolean }) {
+export function ProductCard({ p, priority = false }: { p: ProductCardData; priority?: boolean }) {
   const off = discountOf(p);
   return (
     <article className="group relative flex h-full flex-col rounded-xl border border-border bg-white shadow-card transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-lift">
@@ -75,13 +77,13 @@ export function ProductCard({ p, priority = false }: { p: Product; priority?: bo
         aria-hidden="true"
         className="relative block aspect-square overflow-hidden rounded-t-xl bg-white p-3"
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <Img
           src={p.images?.[0] || PLACEHOLDER_IMG}
           alt=""
           loading={priority ? "eager" : "lazy"}
           width={400}
           height={400}
+          sizes="(min-width: 1024px) 240px, (min-width: 640px) 33vw, 50vw"
           className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.03]"
         />
         {off > 0 && (
@@ -103,7 +105,7 @@ export function ProductCard({ p, priority = false }: { p: Product; priority?: bo
   );
 }
 
-export function ProductGrid({ products, cols = 4 }: { products: Product[]; cols?: 4 | 5 }) {
+export function ProductGrid({ products, cols = 4 }: { products: ProductCardData[]; cols?: 4 | 5 }) {
   if (!products.length) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-white px-6 py-14 text-center">
@@ -212,15 +214,15 @@ export function FaqSection({ title = "Câu hỏi thường gặp", faqs }: { tit
   );
 }
 
-export function PostCard({ post, featured = false }: { post: Post; featured?: boolean }) {
+export function PostCard({ post, featured = false }: { post: PostCardData; featured?: boolean }) {
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-white shadow-card transition-shadow duration-200 hover:shadow-lift">
-      <div className={`overflow-hidden bg-tint ${featured ? "aspect-[16/9]" : "aspect-[16/10]"}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className={`relative overflow-hidden bg-tint ${featured ? "aspect-[16/9]" : "aspect-[16/10]"}`}>
+        <Img
           src={post.cover || PLACEHOLDER_IMG}
           alt=""
-          loading="lazy"
+          fill
+          sizes={featured ? "(min-width: 1024px) 60vw, 100vw" : "(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"}
           className={`h-full w-full transition-transform duration-300 group-hover:scale-[1.03] ${post.cover ? "object-cover" : "object-contain p-8"}`}
         />
       </div>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Mail, MapPin, MessageCircle, Phone } from "lucide-react";
 import { getSettings } from "@/lib/data";
 import { FloatingContact } from "./floating-contact";
+import { Img } from "./img";
 
 export async function SiteFooter() {
   const { general, footer } = await getSettings();
@@ -11,8 +12,7 @@ export async function SiteFooter() {
         <div className="container-x grid gap-10 py-12 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1.1fr]">
           <div>
             <div className="inline-block rounded-xl bg-white px-3 py-2">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={general.logo} alt={general.site_name} width={160} height={50} className="h-10 w-auto" />
+              <Img src={general.logo} alt={general.site_name} width={160} height={50} className="h-10 w-auto" />
             </div>
             <p className="mt-4 text-sm leading-relaxed text-sky-100/80">{general.seo_description}</p>
             <ul className="mt-5 space-y-3 text-sm">

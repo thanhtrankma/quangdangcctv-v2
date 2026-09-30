@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Img } from "@/components/site/img";
 import { Breadcrumb, PageTitle } from "@/components/site/ui";
 import { getBrands, getProductCountsByBrand, getSettings } from "@/lib/data";
 
@@ -20,8 +21,7 @@ export default async function BrandsPage() {
               className="flex h-full min-h-20 flex-col justify-center rounded-xl border border-border bg-white p-4 transition-[border-color,box-shadow] duration-200 hover:border-primary/40 hover:shadow-lift"
             >
               {b.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={b.logo} alt={b.name} className="h-8 w-auto object-contain" />
+                <Img src={b.logo} alt={b.name} width={128} height={32} className="h-8 w-auto object-contain" />
               ) : (
                 <span className="font-heading text-lg font-bold text-ink">{b.name}</span>
               )}

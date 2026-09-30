@@ -1,14 +1,12 @@
 import Link from "next/link";
-import { getPosts } from "@/lib/data";
-import { db } from "@/lib/db";
-import type { PostCategory } from "@/lib/types";
+import { getPostCategories, getPosts } from "@/lib/data";
 import { BlogSidebar } from "./sidebar";
 import { PageTitle, Pagination, PostCard } from "./ui";
 
 export async function PostList({ title, basePath, page, categoryId }: { title: string; basePath: string; page: number; categoryId?: string }) {
-  const [res, { rows: postCats }] = await Promise.all([
+  const [res, postCats] = await Promise.all([
     getPosts({ page, categoryId }),
-    db().list<PostCategory>("post_categories", { order: [{ column: "sort_order" }] }),
+    getPostCategories(),
   ]);
   const [first, ...rest] = res.rows;
   const chip = (active: boolean) =>

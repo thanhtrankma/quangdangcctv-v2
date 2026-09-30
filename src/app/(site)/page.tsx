@@ -3,6 +3,7 @@ import { ArrowRight, BadgeCheck, CreditCard, Headset, Phone, RefreshCcw, ShieldC
 import { CategoryIcon } from "@/components/site/category-icon";
 import { ContactForm } from "@/components/site/contact-form";
 import { HeroCarousel } from "@/components/site/hero-carousel";
+import { Img } from "@/components/site/img";
 import { btn, FaqSection, PostCard, ProductCard, SectionHeading } from "@/components/site/ui";
 import { categoryHref, getBanners, getBrands, getCategories, getPosts, getProducts, getSettings } from "@/lib/data";
 
@@ -20,9 +21,9 @@ export default async function HomePage() {
     getCategories(),
     getBrands(),
     getBanners("home_hero"),
-    getPosts({ limit: 4 }),
+    getPosts({ limit: 4, withCount: false }),
     getProducts({ limit: 0 }),
-    getProducts({ featured: true, limit: 10 }),
+    getProducts({ featured: true, limit: 10, withCount: false }),
   ]);
   const tops = cats.filter((c) => !c.parent_id && c.show_on_home);
   const shelves = await Promise.all(
@@ -203,8 +204,7 @@ export default async function HomePage() {
                   className="flex min-h-16 flex-col justify-center rounded-xl border border-border px-4 py-3 transition-colors duration-200 hover:border-primary hover:bg-tint"
                 >
                   {b.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={b.logo} alt={b.name} className="h-8 w-auto object-contain" />
+                    <Img src={b.logo} alt={b.name} width={128} height={32} className="h-8 w-auto object-contain" />
                   ) : (
                     <span className="font-heading font-bold text-ink">{b.name}</span>
                   )}

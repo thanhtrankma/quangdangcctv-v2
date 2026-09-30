@@ -25,6 +25,8 @@ export interface Query {
   limit?: number;
   offset?: number;
   search?: { columns: string[]; term: string };
+  /** false skips counting the total (count is then the number of rows returned); counting makes Postgres scan every match. */
+  withCount?: boolean;
 }
 
 export interface ListResult<T> {

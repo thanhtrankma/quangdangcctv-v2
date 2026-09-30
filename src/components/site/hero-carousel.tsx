@@ -1,9 +1,16 @@
 "use client";
 
+import type { ImageProps } from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import type { Banner } from "@/lib/types";
+import { Img, responsiveSrcSet } from "./img";
+
+// The slot is the page width minus the 360px quote form on lg+.
+const HERO_SIZES = "(min-width: 1280px) 860px, (min-width: 1024px) calc(100vw - 420px), 100vw";
+const slidePriority = (k: number): Pick<ImageProps, "loading" | "fetchPriority"> =>
+  k === 0 ? { loading: "eager", fetchPriority: "high" } : { loading: "lazy" };
 
 const reducedQuery = "(prefers-reduced-motion: reduce)";
 const subscribeReduced = (cb: () => void) => {
@@ -53,18 +60,16 @@ export function HeroCarousel({ banners }: { banners: Banner[] }) {
           >
             <Link href={b.link || "/cua-hang/"} tabIndex={k === i ? 0 : -1} className="relative block h-full overflow-hidden">
               {/* Blurred copy fills the frame when the banner's ratio differs from the slot; the real image is never cropped. */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={b.image} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full scale-110 object-cover opacity-60 blur-2xl" />
-              <picture>
-                {b.image_mobile && <source media="(max-width: 640px)" srcSet={b.image_mobile} />}
-                <img
-                  src={b.image}
-                  alt={b.title}
-                  fetchPriority={k === 0 ? "high" : "auto"}
-                  loading={k === 0 ? "eager" : "lazy"}
-                  className="relative h-full w-full object-contain"
-                />
-              </picture>
+              {/* A tiny copy is enough for the blur. */}
+              <Img src={b.image} alt="" aria-hidden="true" fill sizes="64px" loading={k === 0 ? "eager" : "lazy"} className="scale-110 object-cover opacity-60 blur-2xl" />
+              {b.image_mobile ? (
+                <picture className="absolute inset-0">
+                  <source media="(max-width: 640px)" srcSet={responsiveSrcSet(b.image_mobile, "100vw")} sizes="100vw" />
+                  <Img src={b.image} alt={b.title} fill sizes={HERO_SIZES} {...slidePriority(k)} className="object-contain" />
+                </picture>
+              ) : (
+                <Img src={b.image} alt={b.title} fill sizes={HERO_SIZES} {...slidePriority(k)} className="object-contain" />
+              )}
               <span className="sr-only">{b.subtitle}</span>
             </Link>
           </div>

@@ -349,4 +349,6 @@ out = {"categories": cats_out, "brands": brands_out, "products": products_out, "
        "posts": posts_out, "pages": pages_out, "banners": [b for b in banners_out if b["image"] not in missing],
        "home_faqs": home_faqs}
 (ROOT / "src/data/scraped.json").write_text(json.dumps(out, ensure_ascii=False, indent=1))
+# Settings defaults read the FAQs from their own small file so they never load scraped.json.
+(ROOT / "src/data/home-faqs.json").write_text(json.dumps(home_faqs, ensure_ascii=False, indent=1))
 print({k: len(v) for k, v in out.items()})

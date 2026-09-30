@@ -6,6 +6,7 @@ import { CheckCircle2, Loader2, ShieldCheck } from "lucide-react";
 import { placeOrder } from "@/app/actions";
 import { formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
 import { useCart } from "./cart";
+import { Img } from "./img";
 import { btn, inputCls } from "./ui-tokens";
 
 // 34 tỉnh/thành sau sắp xếp đơn vị hành chính 2025.
@@ -123,8 +124,7 @@ export function CheckoutClient({ siteName }: { siteName: string }) {
         <ul className="mt-3 max-h-72 divide-y divide-border overflow-auto">
           {items.map((i) => (
             <li key={i.slug + i.variant} className="flex gap-3 py-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={i.image || PLACEHOLDER_IMG} alt="" className="h-12 w-12 shrink-0 rounded-lg border border-border object-contain" />
+              <Img src={i.image || PLACEHOLDER_IMG} alt="" width={48} height={48} className="h-12 w-12 shrink-0 rounded-lg border border-border object-contain" />
               <span className="min-w-0 flex-1 text-sm">
                 <span className="line-clamp-2">{i.name}</span>
                 <span className="text-muted tabular-nums">× {i.qty}</span>

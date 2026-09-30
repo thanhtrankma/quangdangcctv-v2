@@ -5,6 +5,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { Check, ShoppingCart, X } from "lucide-react";
 import { formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
 import type { OrderItem } from "@/lib/types";
+import { Img } from "./img";
 
 const KEY = "dh_cart_v1";
 
@@ -162,8 +163,7 @@ export function HeaderCart() {
               <ul className="max-h-80 space-y-3 overflow-auto">
                 {items.map((i) => (
                   <li key={i.slug + i.variant} className="flex gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={i.image || PLACEHOLDER_IMG} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-border object-contain" />
+                    <Img src={i.image || PLACEHOLDER_IMG} alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg border border-border object-contain" />
                     <div className="min-w-0 flex-1 text-sm">
                       <Link href={`/san-pham/${i.slug}/`} onClick={() => setOpen(false)} className="line-clamp-2 font-medium hover:text-primary">
                         {i.name}

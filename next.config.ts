@@ -10,6 +10,11 @@ const nextConfig: NextConfig = {
       { source: "/tin-tuc/page/:n/", destination: "/tin-tuc/?page=:n", permanent: true },
     ];
   },
+  images: {
+    // Product/post/banner images live in Supabase Storage (public buckets). Other hosts render unoptimized (see components/site/img.tsx).
+    remotePatterns: [{ protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" }],
+    qualities: [75],
+  },
   experimental: {
     serverActions: { bodySizeLimit: "12mb" },
   },

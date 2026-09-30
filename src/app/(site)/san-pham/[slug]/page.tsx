@@ -30,7 +30,7 @@ export default async function ProductPage({ params }: Props) {
   const [cats, brands, { general, product_page }] = await Promise.all([getCategories(), getBrands(), getSettings()]);
   const cat = cats.find((c) => c.id === p.category_id);
   const brand = brands.find((b) => b.id === p.brand_id);
-  const related = p.category_id ? (await getProducts({ categoryId: p.category_id, limit: 10, excludeId: p.id })).rows : [];
+  const related = p.category_id ? (await getProducts({ categoryId: p.category_id, limit: 10, excludeId: p.id, withCount: false })).rows : [];
   const off = discountOf(p);
   const saved = p.compare_at_price && p.compare_at_price > p.price ? p.compare_at_price - p.price : 0;
 

@@ -118,7 +118,7 @@ export default async function SlugPage({ params }: Props) {
   const { post } = r;
   const [cat, more] = await Promise.all([
     post.category_id ? getPostCategoryById(post.category_id) : null,
-    getPosts({ limit: 4, categoryId: post.category_id ?? undefined }),
+    getPosts({ limit: 4, categoryId: post.category_id ?? undefined, withCount: false }),
   ]);
   const jsonLd = {
     "@context": "https://schema.org",

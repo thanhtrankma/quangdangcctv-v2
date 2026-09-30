@@ -2,9 +2,10 @@ import Link from "next/link";
 import { Phone } from "lucide-react";
 import { getPosts, getProducts, getSettings } from "@/lib/data";
 import { formatDate, formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
+import { Img } from "./img";
 
 export async function BlogSidebar() {
-  const [posts, featured, { general }] = await Promise.all([getPosts({ limit: 5 }), getProducts({ featured: true, limit: 5 }), getSettings()]);
+  const [posts, featured, { general }] = await Promise.all([getPosts({ limit: 5, withCount: false }), getProducts({ featured: true, limit: 5, withCount: false }), getSettings()]);
   const box = "rounded-2xl border border-border bg-white p-5";
   return (
     <aside className="space-y-5 lg:sticky lg:top-36 lg:self-start">
@@ -22,8 +23,7 @@ export async function BlogSidebar() {
         <ul className="mt-3 divide-y divide-border">
           {posts.rows.map((p) => (
             <li key={p.id} className="relative flex gap-3 py-3 first:pt-0 last:pb-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.cover || PLACEHOLDER_IMG} alt="" className="h-14 w-20 shrink-0 rounded-lg bg-tint object-cover" />
+              <Img src={p.cover || PLACEHOLDER_IMG} alt="" width={80} height={56} className="h-14 w-20 shrink-0 rounded-lg bg-tint object-cover" />
               <div className="min-w-0 text-sm">
                 <Link href={`/${p.slug}/`} className="line-clamp-2 font-medium text-body after:absolute after:inset-0 hover:text-primary">
                   {p.title}
@@ -44,8 +44,7 @@ export async function BlogSidebar() {
           <ul className="mt-3 divide-y divide-border">
             {featured.rows.map((p) => (
               <li key={p.id} className="relative flex gap-3 py-3 first:pt-0 last:pb-0">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={p.images?.[0] || PLACEHOLDER_IMG} alt="" className="h-14 w-14 shrink-0 rounded-lg border border-border object-contain" />
+                <Img src={p.images?.[0] || PLACEHOLDER_IMG} alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-lg border border-border object-contain" />
                 <div className="min-w-0 text-sm">
                   <Link href={`/san-pham/${p.slug}/`} className="line-clamp-2 font-medium text-body after:absolute after:inset-0 hover:text-primary">
                     {p.name}

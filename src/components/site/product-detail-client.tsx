@@ -6,6 +6,7 @@ import { ChevronDown, Minus, Plus, ShoppingCart, Zap } from "lucide-react";
 import { PLACEHOLDER_IMG } from "@/lib/format";
 import type { OrderItem } from "@/lib/types";
 import { useCart } from "./cart";
+import { Img } from "./img";
 
 export function Gallery({ images, alt }: { images: string[]; alt: string }) {
   const [active, setActive] = useState(0);
@@ -13,8 +14,7 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
   return (
     <div>
       <div className="aspect-square overflow-hidden rounded-2xl border border-border bg-white p-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={list[active]} alt={alt} width={800} height={800} className="h-full w-full object-contain" />
+        <Img src={list[active]} alt={alt} width={800} height={800} loading="eager" fetchPriority="high" sizes="(min-width: 1280px) 34vw, (min-width: 1024px) 48vw, 100vw" className="h-full w-full object-contain" />
       </div>
       {list.length > 1 && (
         <ul className="no-scrollbar mt-3 flex gap-2 overflow-x-auto" aria-label="Ảnh sản phẩm">
@@ -29,8 +29,7 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
                   i === active ? "border-primary" : "border-border hover:border-primary/50"
                 }`}
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={src} alt="" className="h-full w-full object-contain" />
+                <Img src={src} alt="" width={64} height={64} className="h-full w-full object-contain" />
               </button>
             </li>
           ))}

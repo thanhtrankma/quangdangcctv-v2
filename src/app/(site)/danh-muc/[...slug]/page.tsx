@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { CategoryIcon } from "@/components/site/category-icon";
 import { ProductListing, type ListingSearchParams } from "@/components/site/product-listing";
+import { Img } from "@/components/site/img";
 import { Breadcrumb, RichContent } from "@/components/site/ui";
 import { categoryChain, categoryHref, getCategories } from "@/lib/data";
 import { stripHtml } from "@/lib/format";
@@ -60,8 +61,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
         </div>
       </header>
       {cat.banner && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={cat.banner} alt="" className="mb-6 max-h-[320px] w-full rounded-2xl object-cover" />
+        <Img src={cat.banner} alt="" width={1600} height={400} sizes="(min-width: 1280px) 1216px, 100vw" className="mb-6 max-h-[320px] w-full rounded-2xl object-cover" />
       )}
       <ProductListing basePath={categoryHref(all, cat)} searchParams={searchParams} categoryId={cat.id} sideTitle={root.name} sideLinks={sideLinks} />
     </div>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
 import { useCart } from "./cart";
+import { Img } from "./img";
 import { btn } from "./ui-tokens";
 
 export function CartPageClient() {
@@ -26,8 +27,7 @@ export function CartPageClient() {
       <ul className="divide-y divide-border rounded-2xl border border-border bg-white">
         {items.map((i) => (
           <li key={i.slug + i.variant} className="flex flex-wrap items-center gap-4 p-4 sm:flex-nowrap">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={i.image || PLACEHOLDER_IMG} alt="" className="h-20 w-20 shrink-0 rounded-lg border border-border object-contain" />
+            <Img src={i.image || PLACEHOLDER_IMG} alt="" width={80} height={80} className="h-20 w-20 shrink-0 rounded-lg border border-border object-contain" />
             <div className="min-w-0 flex-1">
               <Link href={`/san-pham/${i.slug}/`} className="line-clamp-2 font-medium hover:text-primary">
                 {i.name}

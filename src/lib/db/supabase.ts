@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { seedSettings } from "@/data/seed";
+import { seedSettings } from "@/data/settings";
 import type { Settings, SettingsKey } from "@/lib/types";
 import type { Query, Repo, StockMoveInput, TableName } from "./types";
 
@@ -26,9 +26,10 @@ export const supabaseRepo: Repo = {
   async list<T>(table: TableName, q: Query = {}) {
     // limit: 0 means "count only".
     const head = q.limit === 0;
+    const withCount = q.withCount !== false || head;
     let query = supabaseAdmin()
       .from(table)
-      .select(q.columns?.join(",") || "*", { count: "exact", head });
+      .select(q.columns?.join(",") || "*", withCount ? { count: "exact", head } : undefined);
     for (const [col, val] of Object.entries(q.where ?? {})) {
       if (Array.isArray(val)) query = query.in(col, val);
       else if (val === null) query = query.is(col, null);
@@ -45,7 +46,8 @@ export const supabaseRepo: Repo = {
     }
     const { data, error, count } = await query;
     fail(error);
-    return { rows: (data ?? []) as unknown as T[], count: count ?? 0 };
+    const rows = (data ?? []) as unknown as T[];
+    return { rows, count: withCount ? (count ?? 0) : rows.length };
   },
   async get<T>(table: TableName, id: string) {
     const { data, error } = await supabaseAdmin().from(table).select("*").eq("id", id).maybeSingle();
@@ -53,7 +55,7 @@ export const supabaseRepo: Repo = {
     return data as T | null;
   },
   async findOne<T>(table: TableName, where: Record<string, unknown>) {
-    const { rows } = await this.list<T>(table, { where, limit: 1 });
+    const { rows } = await this.list<T>(table, { where, limit: 1, withCount: false });
     return rows[0] ?? null;
   },
   async insert<T>(table: TableName, data: Record<string, unknown>) {

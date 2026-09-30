@@ -2,18 +2,25 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { checkCredentials, createSessionToken, SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 import { getResource, getSettingsGroup, type Field } from "@/lib/admin/config";
 import { hooksFor, logPrice } from "@/lib/admin/hooks";
+import { CONTENT_TAG } from "@/lib/data";
 import { db, isSupabaseConfigured } from "@/lib/db";
 import { supabaseAdmin } from "@/lib/db/supabase";
 import { slugify } from "@/lib/format";
 import type { Product, Settings, SettingsKey } from "@/lib/types";
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
+
+/** After any content write: expire the cached storefront reads and the rendered pages built from them. */
+function refreshSite() {
+  updateTag(CONTENT_TAG);
+  revalidatePath("/", "layout");
+}
 
 async function requireAdmin() {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
@@ -122,7 +129,7 @@ export async function saveRecord(resourceKey: string, id: string | null, values:
       ? await db().update<Record<string, unknown> & { id: string }>(res.key, id, data)
       : await db().insert<Record<string, unknown> & { id: string }>(res.key, data);
     await hooks.afterSave?.({ id: row.id, data, old, row });
-    revalidatePath("/", "layout");
+    refreshSite();
     return { ok: true, id: row.id };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
@@ -138,7 +145,7 @@ export async function deleteRecord(resourceKey: string, id: string): Promise<Act
     const old = await db().get<Record<string, unknown>>(res.key, id);
     if (old) await hooksFor(res.key).beforeDelete?.(old);
     await db().remove(res.key, id);
-    revalidatePath("/", "layout");
+    refreshSite();
     return { ok: true };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
@@ -153,7 +160,7 @@ export async function saveSettings(groupKey: string, values: Record<string, unkn
     const current = await db().getSettings();
     const next = { ...current[group.key], ...coerce(group.fields, values) } as Settings[SettingsKey];
     await db().setSetting(group.key, next);
-    revalidatePath("/", "layout");
+    refreshSite();
     return { ok: true };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
@@ -215,7 +222,7 @@ export async function applyStocktake(counts: { productId: string; counted: numbe
       });
       changed++;
     }
-    revalidatePath("/", "layout");
+    refreshSite();
     return { ok: true, changed };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
@@ -276,7 +283,7 @@ export async function bulkPrice(input: BulkPriceInput): Promise<{ ok: true; rows
         await logPrice(before, after, "bulk", input.note);
         applied++;
       }
-      revalidatePath("/", "layout");
+      refreshSite();
     }
     return { ok: true, rows: result, applied };
   } catch (e) {

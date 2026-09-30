@@ -5,7 +5,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { seedSettings, seedTables } from "@/data/seed";
+import { seedSettings } from "@/data/settings";
 import type { Settings, SettingsKey } from "@/lib/types";
 import type { ListResult, Query, Repo, StockMoveInput, TableName } from "./types";
 
@@ -14,10 +14,17 @@ type Store = { tables: Record<string, Row[]>; settings: Partial<Settings> };
 
 const FILE = process.env.VERCEL ? "/tmp/dolphinhouse-db.json" : path.join(process.cwd(), ".data", "db.json");
 
-const g = globalThis as unknown as { __dhStore?: Store };
+const g = globalThis as unknown as { __dhStore?: Store; __dhStoreLoading?: Promise<Store> };
 
-function load(): Store {
-  if (g.__dhStore) return g.__dhStore;
+function load(): Promise<Store> {
+  if (g.__dhStore) return Promise.resolve(g.__dhStore);
+  // One shared load, so concurrent first requests don't each build (and overwrite) the store.
+  return (g.__dhStoreLoading ??= loadStore());
+}
+
+async function loadStore(): Promise<Store> {
+  // Imported lazily: the seed pulls in the 3 MB scraped.json, which the Supabase build must not load.
+  const { seedTables } = await import("@/data/seed");
   let store: Store | null = null;
   try {
     store = JSON.parse(fs.readFileSync(FILE, "utf8")) as Store;
@@ -74,32 +81,33 @@ function applyQuery<T>(rows: Row[], q: Query = {}): ListResult<T> {
   const offset = q.offset ?? 0;
   out = q.limit !== undefined ? out.slice(offset, offset + q.limit) : out.slice(offset);
   if (q.columns) out = out.map((r) => Object.fromEntries(q.columns!.map((c) => [c, r[c]])) as Row);
-  return { rows: structuredClone(out) as T[], count };
+  // Same contract as Supabase: without a count, count is just the rows returned.
+  return { rows: structuredClone(out) as T[], count: q.withCount === false ? out.length : count };
 }
 
 export const mockRepo: Repo = {
   kind: "mock",
   async list<T>(table: TableName, q?: Query) {
-    return applyQuery<T>(load().tables[table] ?? [], q);
+    return applyQuery<T>((await load()).tables[table] ?? [], q);
   },
   async get<T>(table: TableName, id: string) {
-    const row = (load().tables[table] ?? []).find((r) => r.id === id);
+    const row = ((await load()).tables[table] ?? []).find((r) => r.id === id);
     return row ? (structuredClone(row) as T) : null;
   },
   async findOne<T>(table: TableName, where: Record<string, unknown>) {
-    return applyQuery<T>(load().tables[table] ?? [], { where, limit: 1 }).rows[0] ?? null;
+    return applyQuery<T>((await load()).tables[table] ?? [], { where, limit: 1 }).rows[0] ?? null;
   },
   async insert<T>(table: TableName, data: Record<string, unknown>) {
     const now = new Date().toISOString();
     const row = { ...data, id: (data.id as string) || crypto.randomUUID(), created_at: now, updated_at: now } as Row;
-    const rows = load().tables[table];
+    const rows = (await load()).tables[table];
     if (rows.some((r) => r.id === row.id)) throw new Error("Bản ghi với ID này đã tồn tại");
     rows.unshift(row);
     persist();
     return structuredClone(row) as T;
   },
   async update<T>(table: TableName, id: string, data: Record<string, unknown>) {
-    const rows = load().tables[table];
+    const rows = (await load()).tables[table];
     const i = rows.findIndex((r) => r.id === id);
     if (i < 0) throw new Error("Không tìm thấy bản ghi");
     rows[i] = { ...rows[i], ...data, id, updated_at: new Date().toISOString() };
@@ -107,23 +115,23 @@ export const mockRepo: Repo = {
     return structuredClone(rows[i]) as T;
   },
   async remove(table: TableName, id: string) {
-    const store = load();
+    const store = await load();
     store.tables[table] = store.tables[table].filter((r) => r.id !== id);
     persist();
   },
   async getSettings() {
-    const s = load().settings;
+    const s = (await load()).settings;
     const merged = structuredClone(seedSettings);
     for (const k of Object.keys(merged) as SettingsKey[]) Object.assign(merged[k], s[k] ?? {});
     return merged;
   },
   async setSetting(key, value) {
-    load().settings[key] = structuredClone(value);
+    (await load()).settings[key] = structuredClone(value);
     persist();
   },
   // Same rules as the apply_stock_movement SQL function (supabase/migrations/002).
   async stockMove(m: StockMoveInput) {
-    const store = load();
+    const store = await load();
     const p = store.tables.products.find((r) => r.id === m.productId);
     if (!p) throw new Error(`Không tìm thấy sản phẩm ${m.productId}`);
     const stock = Number(p.stock ?? 0);
