@@ -290,3 +290,28 @@ export async function bulkPrice(input: BulkPriceInput): Promise<{ ok: true; rows
     return { ok: false, error: (e as Error).message };
   }
 }
+
+/** Category manager: write sort_order 1..n for one set of siblings, in the given order. */
+export async function reorderCategories(orderedIds: string[]): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    await Promise.all(orderedIds.map((id, i) => db().update("categories", id, { sort_order: i + 1 })));
+    refreshSite();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+/** Category manager: toggle “show on home” and store the resulting top-level order in one go. */
+export async function setCategoryOnHome(id: string, on: boolean, orderedTopIds: string[]): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    await db().update("categories", id, { show_on_home: on });
+    await Promise.all(orderedTopIds.map((cid, i) => db().update("categories", cid, { sort_order: i + 1 })));
+    refreshSite();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}

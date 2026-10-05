@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { X } from "lucide-react";
-import { getBrands, getProducts, PAGE_SIZE, type ProductSort } from "@/lib/data";
+import { getBrands, getProductCountsByBrand, getProducts, PAGE_SIZE, type ProductSort } from "@/lib/data";
 import { SortSelect } from "./sort-select";
 import { Pagination, ProductGrid } from "./ui";
 
@@ -29,10 +29,15 @@ export async function ProductListing({
   const page = Number(sp.page) || 1;
   const sort = (sp.sort as ProductSort) || "default";
   const brandFilter = brandId ?? sp.brand;
-  const [res, brands] = await Promise.all([
+  const [res, allBrands, brandCounts] = await Promise.all([
     getProducts({ categoryId, brandId: brandFilter, q: sp.q, sort, page }),
     brandId ? Promise.resolve([]) : getBrands(),
+    brandId ? Promise.resolve({} as Record<string, number>) : getProductCountsByBrand(categoryId, sp.q),
   ]);
+  // Only brands that actually have products in this category / search, most products first.
+  const brands = allBrands
+    .filter((b) => (brandCounts[b.id] ?? 0) > 0 || b.id === sp.brand)
+    .sort((a, b) => (brandCounts[b.id] ?? 0) - (brandCounts[a.id] ?? 0) || a.name.localeCompare(b.name, "vi"));
   const from = res.count ? (page - 1) * PAGE_SIZE + 1 : 0;
   const to = Math.min(page * PAGE_SIZE, res.count);
 
@@ -69,23 +74,25 @@ export async function ProductListing({
             </ul>
           </nav>
         )}
-        {brands.length > 0 && (
-          <div className="hidden rounded-xl border border-border bg-white p-4 lg:block">
+        {brands.length > 1 && (
+          <div className="rounded-xl border border-border bg-white p-4">
             <h2 className="mb-2 font-heading text-base font-semibold">Thương hiệu</h2>
-            <ul className="flex flex-wrap gap-2">
-              {brands.slice(0, 24).map((b) => {
+            {/* Phones: one scrollable row like the category chips; desktop: wrapped. */}
+            <ul className="no-scrollbar flex gap-2 overflow-x-auto lg:flex-wrap lg:overflow-visible">
+              {brands.map((b) => {
                 const on = b.id === sp.brand;
                 return (
-                  <li key={b.id}>
+                  <li key={b.id} className="shrink-0">
                     <Link
                       href={qs({ brand: on ? undefined : b.id, page: undefined })}
                       aria-pressed={on}
                       scroll={false}
-                      className={`inline-flex min-h-9 items-center rounded-full border px-3 text-sm transition-colors duration-150 ${
+                      className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 text-sm whitespace-nowrap transition-colors duration-150 ${
                         on ? "border-primary bg-primary text-white" : "border-border text-body hover:border-primary hover:text-primary"
                       }`}
                     >
                       {b.name}
+                      <span className={`text-xs tabular-nums ${on ? "text-white/80" : "text-subtle"}`}>{brandCounts[b.id] ?? 0}</span>
                     </Link>
                   </li>
                 );

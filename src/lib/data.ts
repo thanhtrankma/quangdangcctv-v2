@@ -115,13 +115,17 @@ export const getProductBySlug = cached("product-by-slug", (slug: string) =>
   db().findOne<Product>("products", { slug, status: "published" }),
 );
 
-export const getProductCountsByBrand = cached("product-counts-by-brand", async () => {
+/** Published products per brand, optionally only within a category (and its sub-categories) and/or a search term. */
+export const getProductCountsByBrand = cached("product-counts-by-brand", async (categoryId?: string, q?: string) => {
   const counts: Record<string, number> = {};
+  const where: Record<string, unknown> = { status: "published" };
+  if (categoryId) where.category_id = categoryWithDescendants(await getCategories(), categoryId);
   // Paged: Supabase caps a response at 1000 rows.
   for (let offset = 0; ; offset += 1000) {
     const { rows } = await db().list<Pick<Product, "brand_id">>("products", {
       columns: ["brand_id"],
-      where: { status: "published" },
+      where,
+      search: q ? { columns: ["name", "sku"], term: q } : undefined,
       order: [{ column: "id" }],
       limit: 1000,
       offset,

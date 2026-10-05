@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Plus, Search, Trash2 } from "lucide-react";
 import { formatPrice, slugify } from "@/lib/format";
 import type { PurchaseItem } from "@/lib/types";
+import { MoneyInput } from "./money-input";
 
 export type ProductOption = { value: string; label: string; meta?: { sku?: string; cost?: number; stock?: number } };
 
@@ -114,11 +115,10 @@ export function PoItemsInput({
                   {locked ? (
                     <div className="text-right tabular-nums">{formatPrice(it.unit_cost)}</div>
                   ) : (
-                    <input
-                      inputMode="numeric"
-                      aria-label={`Giá nhập ${it.name}`}
-                      value={it.unit_cost ? it.unit_cost.toLocaleString("vi-VN") : ""}
-                      onChange={(e) => set(k, { unit_cost: digits(e.target.value) })}
+                    <MoneyInput
+                      ariaLabel={`Giá nhập ${it.name}`}
+                      value={it.unit_cost || ""}
+                      onChange={(v) => set(k, { unit_cost: v === "" ? 0 : v })}
                       className={cell}
                     />
                   )}

@@ -8,11 +8,14 @@ export const metadata: Metadata = { title: "Thương hiệu", alternates: { cano
 
 export default async function BrandsPage() {
   const [brands, counts, { general }] = await Promise.all([getBrands(), getProductCountsByBrand(), getSettings()]);
-  const sorted = [...brands].sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name, "vi"));
+  // Brands without any published product would lead to an empty page, so leave them out.
+  const sorted = brands
+    .filter((b) => (counts[b.id] ?? 0) > 0)
+    .sort((a, b) => (counts[b.id] ?? 0) - (counts[a.id] ?? 0) || a.name.localeCompare(b.name, "vi"));
   return (
     <div className="container-x">
       <Breadcrumb items={[{ label: "Thương hiệu" }]} />
-      <PageTitle sub={`${brands.length} thương hiệu chính hãng đang được ${general.site_name} phân phối.`}>Thương hiệu</PageTitle>
+      <PageTitle sub={`${sorted.length} thương hiệu chính hãng đang được ${general.site_name} phân phối.`}>Thương hiệu</PageTitle>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {sorted.map((b) => (
           <li key={b.id}>

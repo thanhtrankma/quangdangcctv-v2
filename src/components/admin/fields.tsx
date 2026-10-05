@@ -6,6 +6,7 @@ import { uploadImage } from "@/app/admin/actions";
 import type { Field } from "@/lib/admin/config";
 import { formatDateTime, formatPrice, PLACEHOLDER_IMG, slugify } from "@/lib/format";
 import type { OrderItem, PurchaseItem } from "@/lib/types";
+import { MoneyInput } from "./money-input";
 import { PoItemsInput, type ProductOption } from "./po-items";
 import { RichTextEditor } from "./rich-text";
 
@@ -283,16 +284,7 @@ export function FieldInput({
     case "money":
       control = (
         <div className="relative">
-          <input
-            inputMode="numeric"
-            value={value === null || value === undefined || value === "" ? "" : new Intl.NumberFormat("vi-VN").format(Number(value))}
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, "");
-              onChange(digits === "" ? "" : Number(digits));
-            }}
-            placeholder={f.placeholder}
-            className={`${inputCls} pr-8`}
-          />
+          <MoneyInput value={value as number | ""} onChange={onChange} placeholder={f.placeholder} className={`${inputCls} pr-8`} />
           <span className="absolute right-3 top-2.5 text-sm text-slate-400">₫</span>
         </div>
       );
