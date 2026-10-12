@@ -92,43 +92,67 @@ export function CategoryManager({ categories }: { categories: Cat[] }) {
   const renderRow = (cat: Cat, depth: number, actions: React.ReactNode, home?: boolean) => {
     const kids = children.get(cat.id)?.length ?? 0;
     return (
-      <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 px-3 py-2 hover:bg-slate-50 sm:flex-nowrap">
-        {actions}
-        <button
-          type="button"
-          onClick={() => kids && setOpen((o) => ({ ...o, [cat.id]: !o[cat.id] }))}
-          disabled={!kids}
-          aria-expanded={kids ? Boolean(open[cat.id]) : undefined}
-          aria-label={kids ? `${open[cat.id] ? "Thu gọn" : "Mở"} danh mục con của ${cat.name}` : undefined}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-        >
-          <ChevronRight
-            size={16}
-            aria-hidden="true"
-            className={`shrink-0 transition-transform ${kids ? "text-slate-500" : "text-transparent"} ${open[cat.id] ? "rotate-90" : ""}`}
-          />
-          <span className={`truncate ${depth === 0 ? "font-semibold" : ""}`}>{cat.name}</span>
-          {kids > 0 && <span className="shrink-0 text-xs text-slate-500">{kids} danh mục con</span>}
-        </button>
-        <span className="w-20 shrink-0 text-right text-sm text-slate-500 tabular-nums">{cat.count} SP</span>
-        {home !== undefined && (
-          <button
-            type="button"
-            role="switch"
-            aria-checked={home}
-            aria-label={`Hiện ${cat.name} trên trang chủ`}
-            onClick={() => toggleHome(cat)}
-            className={`inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3 text-xs font-semibold transition-colors ${
-              home ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            {home ? <Eye size={14} aria-hidden="true" /> : <EyeOff size={14} aria-hidden="true" />}
-            {home ? "Hiện trang chủ" : "Ẩn trang chủ"}
-          </button>
-        )}
-        <Link href={`/admin/categories/${cat.id}/`} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-teal-700" aria-label={`Sửa ${cat.name}`} title="Sửa">
-          <Pencil size={16} aria-hidden="true" />
-        </Link>
+      <div className="border-b border-slate-100 px-3 py-2.5 transition-colors hover:bg-slate-50">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          {/* Cột trái: Nút di chuyển, Tên danh mục, Số danh mục con */}
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            {actions}
+            <button
+              type="button"
+              onClick={() => kids && setOpen((o) => ({ ...o, [cat.id]: !o[cat.id] }))}
+              disabled={!kids}
+              aria-expanded={kids ? Boolean(open[cat.id]) : undefined}
+              aria-label={kids ? `${open[cat.id] ? "Thu gọn" : "Mở"} danh mục con của ${cat.name}` : undefined}
+              className="flex min-w-0 flex-1 items-center gap-2 text-left"
+            >
+              <ChevronRight
+                size={16}
+                aria-hidden="true"
+                className={`shrink-0 transition-transform ${kids ? "text-slate-500" : "text-transparent"} ${open[cat.id] ? "rotate-90" : ""}`}
+              />
+              <span className={`text-[15px] text-slate-800 leading-snug break-words ${depth === 0 ? "font-semibold text-slate-900" : "font-medium"}`}>
+                {cat.name}
+              </span>
+              {kids > 0 && (
+                <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">
+                  {kids} mục con
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Cột phải (trên mobile tự động xuống dòng và căn đều gọn gàng) */}
+          <div className="flex items-center justify-between gap-2 pl-9 sm:pl-0 sm:justify-end">
+            <span className="text-xs font-medium text-slate-500 tabular-nums sm:text-sm sm:w-16 sm:text-right">
+              {cat.count} SP
+            </span>
+            <div className="flex items-center gap-1.5">
+              {home !== undefined && (
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={home}
+                  aria-label={`Hiện ${cat.name} trên trang chủ`}
+                  onClick={() => toggleHome(cat)}
+                  className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors ${
+                    home ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-200" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                  }`}
+                >
+                  {home ? <Eye size={13} aria-hidden="true" /> : <EyeOff size={13} aria-hidden="true" />}
+                  <span>{home ? "Hiện trang chủ" : "Ẩn trang chủ"}</span>
+                </button>
+              )}
+              <Link
+                href={`/admin/categories/${cat.id}/`}
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-teal-600 hover:text-teal-700"
+                aria-label={`Sửa ${cat.name}`}
+                title="Sửa"
+              >
+                <Pencil size={14} aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
