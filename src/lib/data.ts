@@ -5,8 +5,9 @@
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { db } from "@/lib/db";
+import { seedSettings } from "@/data/settings";
 import { seedSolutions } from "@/data/solutions";
-import type { Banner, Brand, Category, Page, Post, PostCategory, Product, Solution, Video } from "@/lib/types";
+import type { Banner, Brand, Category, Page, Post, PostCategory, Product, Settings, SettingsKey, Solution, Video } from "@/lib/types";
 
 export const CONTENT_TAG = "content";
 
@@ -39,7 +40,18 @@ const sortOrder = (sort: ProductSort = "default") => {
   }
 };
 
-export const getSettings = cached("settings", () => db().getSettings());
+const getStoredSettings = cached("settings", () => db().getSettings());
+
+/**
+ * Defaults are filled in again outside the cache: Vercel keeps cached data across deploys, so a
+ * settings object cached by an older build can lack groups/fields added since (e.g. solutions_page).
+ */
+export const getSettings = cache(async (): Promise<Settings> => {
+  const stored = await getStoredSettings();
+  const merged = structuredClone(seedSettings);
+  for (const k of Object.keys(merged) as SettingsKey[]) Object.assign(merged[k], stored[k] ?? {});
+  return merged;
+});
 
 export const getCategories = cached("categories", async () => {
   const { rows } = await db().list<Category>("categories", { order: [{ column: "sort_order" }, { column: "name" }], withCount: false });
