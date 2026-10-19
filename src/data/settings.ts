@@ -21,6 +21,7 @@ export const seedSettings: Settings = {
       "SmartHomeHP cung cấp và lắp đặt camera an ninh Hikvision, Ezviz, thiết bị mạng, bộ lưu điện UPS, máy tính và giải pháp công nghệ tại Hải Phòng và toàn miền Bắc.",
     og_image: "/assets/images/site/quangdang-cctv-logo.svg",
     ga_id: "",
+    price_mode: "contact",
   },
   header: {
     topbar_left: "Showroom: 79 Phương Lưu, Hải An, Hải Phòng",
@@ -94,5 +95,26 @@ export const seedSettings: Settings = {
       { icon: "/assets/images/site/policy-icons/icon-policy-4.png", text: "<strong>Hỗ trợ nhiệt tình 24/7</strong><br>Hotline <strong>0917 799 091</strong>" },
       { icon: "/assets/images/site/policy-icons/icon-policy-5.png", text: "Lắp đặt trọn gói tại Hải Phòng & miền Bắc" },
     ],
+  },
+  solutions_page: {
+    eyebrow: "Một đơn vị – trọn gói giải pháp",
+    title: "Giải pháp thông minh cho mọi công trình",
+    intro:
+      "Từ khảo sát, thiết kế, cung cấp thiết bị chính hãng đến thi công và bảo hành — một đầu mối duy nhất chịu trách nhiệm cho toàn bộ hệ thống của bạn.",
+    steps: [
+      { title: "Tư vấn", text: "Khảo sát tận nơi, lắng nghe nhu cầu và ngân sách, đề xuất phương án phù hợp." },
+      { title: "Cung cấp", text: "Thiết bị chính hãng từ các thương hiệu uy tín, báo giá minh bạch theo từng hạng mục." },
+      { title: "Thi công", text: "Đội ngũ kỹ thuật lắp đặt gọn gàng, đúng tiến độ, bàn giao và hướng dẫn sử dụng." },
+      { title: "Bảo hành", text: "Bảo hành chính hãng, hỗ trợ kỹ thuật nhanh, bảo trì định kỳ khi cần." },
+    ],
+    values: [
+      { title: "Sản phẩm chính hãng", text: "Nguồn gốc rõ ràng, đầy đủ chứng từ" },
+      { title: "Đội ngũ chuyên nghiệp", text: "Kỹ thuật viên nhiều năm kinh nghiệm" },
+      { title: "Bảo hành tận tâm", text: "Xử lý sự cố nhanh, tận nơi" },
+      { title: "Hỗ trợ nhanh chóng", text: "Phản hồi trong giờ làm việc" },
+      { title: "Giải pháp theo nhu cầu", text: "Thiết kế riêng cho từng công trình" },
+    ],
+    cta_title: "Bạn đang có công trình cần triển khai?",
+    cta_text: "Gửi yêu cầu để được khảo sát và báo giá miễn phí trong 24 giờ.",
   },
 };

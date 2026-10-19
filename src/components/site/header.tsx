@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { Clock, MapPin, Phone, Search } from "lucide-react";
-import { categoryHref, getCategories, getSettings } from "@/lib/data";
+import { categoryHref, getCategories, getSettings, getSolutions } from "@/lib/data";
 import { HeaderCart } from "./cart";
 import { Img } from "./img";
 import { MainNav, type NavCategory } from "./main-nav";
+import { SolutionIcon } from "./solutions";
 
 export async function SiteHeader() {
-  const [{ general, header }, cats] = await Promise.all([getSettings(), getCategories()]);
+  const [{ general, header }, cats, solutions] = await Promise.all([getSettings(), getCategories(), getSolutions()]);
   const node = (id: string | null): NavCategory[] =>
     cats
       .filter((c) => c.parent_id === id)
@@ -69,7 +70,10 @@ export async function SiteHeader() {
             <HeaderCart />
           </div>
         </div>
-        <MainNav tree={tree} links={header.nav_links} hotline={general.hotline} hotlineDisplay={general.hotline_display} />
+        <MainNav
+          tree={tree}
+          links={header.nav_links}
+          solutions={solutions.map((x) => ({ slug: x.slug, title: x.title, summary: x.summary, icon: <SolutionIcon name={x.icon} className="h-5 w-5" /> }))} hotline={general.hotline} hotlineDisplay={general.hotline_display} />
       </header>
       <form action="/cua-hang/" method="get" role="search" className="container-x relative bg-white py-2 md:hidden">
         <label htmlFor="q-mobile" className="sr-only">

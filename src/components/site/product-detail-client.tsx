@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ChevronDown, Minus, Plus, ShoppingCart, Zap } from "lucide-react";
+import { ChevronDown, ClipboardPlus, Minus, Plus, Send, ShoppingCart, Zap } from "lucide-react";
 import { PLACEHOLDER_IMG } from "@/lib/format";
 import type { OrderItem } from "@/lib/types";
 import { useCart } from "./cart";
@@ -40,10 +40,11 @@ export function Gallery({ images, alt }: { images: string[]; alt: string }) {
 }
 
 export function BuyBox({ item, canBuy }: { item: Omit<OrderItem, "qty">; canBuy: boolean }) {
-  const { add } = useCart();
+  const { add, quote } = useCart();
   const router = useRouter();
   const [qty, setQty] = useState(1);
-  if (!canBuy) return null;
+  // In quote mode every product can go on the quote list, priced or not.
+  if (!canBuy && !quote) return null;
   const stepper = "grid h-11 w-11 place-items-center text-ink transition-colors duration-150 hover:bg-tint disabled:opacity-40";
   return (
     <div className="space-y-3">
@@ -73,7 +74,8 @@ export function BuyBox({ item, canBuy }: { item: Omit<OrderItem, "qty">; canBuy:
           onClick={() => add(item, qty)}
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border-2 border-primary font-semibold text-primary transition-colors duration-200 hover:bg-primary-soft"
         >
-          <ShoppingCart size={18} aria-hidden="true" /> Thêm vào giỏ
+          {quote ? <ClipboardPlus size={18} aria-hidden="true" /> : <ShoppingCart size={18} aria-hidden="true" />}
+          {quote ? "Thêm vào báo giá" : "Thêm vào giỏ"}
         </button>
         <button
           type="button"
@@ -83,7 +85,8 @@ export function BuyBox({ item, canBuy }: { item: Omit<OrderItem, "qty">; canBuy:
           }}
           className="inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-cta font-semibold text-white transition-colors duration-200 hover:bg-cta-hover"
         >
-          <Zap size={18} aria-hidden="true" /> Mua ngay
+          {quote ? <Send size={18} aria-hidden="true" /> : <Zap size={18} aria-hidden="true" />}
+          {quote ? "Gửi yêu cầu ngay" : "Mua ngay"}
         </button>
       </div>
     </div>

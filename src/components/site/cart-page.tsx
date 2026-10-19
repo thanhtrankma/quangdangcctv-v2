@@ -3,18 +3,19 @@
 import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
-import { useCart } from "./cart";
+import { cartWords, useCart } from "./cart";
 import { Img } from "./img";
 import { btn } from "./ui-tokens";
 
 export function CartPageClient() {
-  const { items, total, count, setQty, remove, ready } = useCart();
+  const { items, total, count, setQty, remove, ready, quote } = useCart();
+  const w = cartWords(quote);
   if (!ready) return <div className="h-60 animate-pulse rounded-2xl bg-white" />;
   if (!items.length) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-white px-6 py-16 text-center">
         <ShoppingBag size={40} className="mx-auto text-subtle" aria-hidden="true" />
-        <p className="mt-3 font-semibold text-ink">Giỏ hàng của bạn đang trống.</p>
+        <p className="mt-3 font-semibold text-ink">{w.empty}</p>
         <Link href="/cua-hang/" className={`${btn.primary} mt-4`}>
           Tiếp tục mua sắm
         </Link>
@@ -33,7 +34,7 @@ export function CartPageClient() {
                 {i.name}
               </Link>
               {i.variant && <p className="text-sm text-muted">{i.variant}</p>}
-              <p className="mt-1 font-semibold text-price tabular-nums">{formatPrice(i.price)}</p>
+              {!quote && <p className="mt-1 font-semibold text-price tabular-nums">{formatPrice(i.price)}</p>}
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-stretch overflow-hidden rounded-lg border border-border" role="group" aria-label={`Số lượng ${i.name}`}>
@@ -57,20 +58,26 @@ export function CartPageClient() {
         ))}
       </ul>
       <div className="h-fit rounded-2xl border border-border bg-white p-5 lg:sticky lg:top-36">
-        <h2 className="text-lg font-bold">Tóm tắt đơn hàng</h2>
+        <h2 className="text-lg font-bold">{quote ? "Yêu cầu của bạn" : "Tóm tắt đơn hàng"}</h2>
         <dl className="mt-4 space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted">Số sản phẩm</dt>
             <dd className="tabular-nums">{count}</dd>
           </div>
-          <div className="flex justify-between border-t border-border pt-3 text-base">
-            <dt className="font-semibold">Tạm tính</dt>
-            <dd className="font-bold text-price tabular-nums">{formatPrice(total)}</dd>
-          </div>
+          {!quote && (
+            <div className="flex justify-between border-t border-border pt-3 text-base">
+              <dt className="font-semibold">Tạm tính</dt>
+              <dd className="font-bold text-price tabular-nums">{formatPrice(total)}</dd>
+            </div>
+          )}
         </dl>
-        <p className="mt-2 text-xs text-muted">Phí vận chuyển & lắp đặt được xác nhận khi nhân viên gọi lại.</p>
+        <p className="mt-2 text-xs text-muted">
+          {quote
+            ? "Chúng tôi báo giá theo số lượng, gói lắp đặt và khảo sát thực tế — miễn phí, không ràng buộc."
+            : "Phí vận chuyển & lắp đặt được xác nhận khi nhân viên gọi lại."}
+        </p>
         <Link href="/thanh-toan/" className={`${btn.cta} mt-4 w-full`}>
-          Tiến hành đặt hàng
+          {quote ? "Tiếp tục gửi yêu cầu báo giá" : "Tiến hành đặt hàng"}
         </Link>
       </div>
     </div>

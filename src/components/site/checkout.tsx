@@ -21,7 +21,7 @@ const label = "mb-1.5 block text-sm font-medium text-ink";
 const Req = () => <span className="text-price"> *</span>;
 
 export function CheckoutClient({ siteName }: { siteName: string }) {
-  const { items, total, clear, ready } = useCart();
+  const { items, total, clear, ready, quote } = useCart();
   const [state, action, pending] = useActionState(placeOrder, null);
 
   useEffect(() => {
@@ -32,10 +32,14 @@ export function CheckoutClient({ siteName }: { siteName: string }) {
     return (
       <div role="status" className="rounded-2xl border border-trust/30 bg-green-50 p-8 text-center">
         <CheckCircle2 size={48} className="mx-auto text-trust" aria-hidden="true" />
-        <p className="mt-3 font-heading text-2xl font-bold text-ink">Đặt hàng thành công!</p>
-        <p className="mt-2 text-muted">Cảm ơn bạn đã đặt hàng tại {siteName}. Chúng tôi sẽ gọi điện xác nhận trong thời gian sớm nhất.</p>
+        <p className="mt-3 font-heading text-2xl font-bold text-ink">{quote ? "Đã gửi yêu cầu báo giá!" : "Đặt hàng thành công!"}</p>
+        <p className="mt-2 text-muted">
+          {quote
+            ? `Cảm ơn bạn đã tin tưởng ${siteName}. Kỹ thuật viên sẽ liên hệ để tư vấn và gửi báo giá trong thời gian sớm nhất.`
+            : `Cảm ơn bạn đã đặt hàng tại ${siteName}. Chúng tôi sẽ gọi điện xác nhận trong thời gian sớm nhất.`}
+        </p>
         <p className="mt-3">
-          Mã đơn hàng: <strong className="text-lg text-ink tabular-nums">{state.code}</strong>
+          {quote ? "Mã yêu cầu" : "Mã đơn hàng"}: <strong className="text-lg text-ink tabular-nums">{state.code}</strong>
         </p>
         <Link href="/cua-hang/" className={`${btn.primary} mt-5`}>
           Tiếp tục mua sắm
@@ -57,13 +61,14 @@ export function CheckoutClient({ siteName }: { siteName: string }) {
 
   return (
     <form action={action} className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+      <input type="hidden" name="kind" value={quote ? "quote" : "order"} />
       <input type="hidden" name="items" value={JSON.stringify(items.map(({ slug, variant, qty }) => ({ slug, variant, qty })))} />
       <div className="hidden" aria-hidden="true">
         <input type="text" name="_hp" tabIndex={-1} autoComplete="off" />
       </div>
 
       <fieldset className="space-y-4 rounded-2xl border border-border bg-white p-5 md:p-6">
-        <legend className="float-left mb-2 w-full font-heading text-lg font-bold text-ink">Thông tin nhận hàng</legend>
+        <legend className="float-left mb-2 w-full font-heading text-lg font-bold text-ink">{quote ? "Thông tin liên hệ" : "Thông tin nhận hàng"}</legend>
         <div className="clear-both">
           <label htmlFor="co-name" className={label}>
             Họ và tên<Req />
@@ -120,7 +125,9 @@ export function CheckoutClient({ siteName }: { siteName: string }) {
       </fieldset>
 
       <div className="h-fit rounded-2xl border border-border bg-white p-5 md:p-6 lg:sticky lg:top-36">
-        <h2 className="text-lg font-bold">Đơn hàng ({items.length})</h2>
+        <h2 className="text-lg font-bold">
+          {quote ? "Sản phẩm cần báo giá" : "Đơn hàng"} ({items.length})
+        </h2>
         <ul className="mt-3 max-h-72 divide-y divide-border overflow-auto">
           {items.map((i) => (
             <li key={i.slug + i.variant} className="flex gap-3 py-3">
@@ -129,17 +136,21 @@ export function CheckoutClient({ siteName }: { siteName: string }) {
                 <span className="line-clamp-2">{i.name}</span>
                 <span className="text-muted tabular-nums">× {i.qty}</span>
               </span>
-              <span className="shrink-0 text-sm font-semibold tabular-nums">{formatPrice(i.price * i.qty)}</span>
+              {!quote && <span className="shrink-0 text-sm font-semibold tabular-nums">{formatPrice(i.price * i.qty)}</span>}
             </li>
           ))}
         </ul>
-        <div className="mt-3 flex justify-between border-t border-border pt-3">
-          <span className="font-semibold">Tổng tạm tính</span>
-          <strong className="text-lg text-price tabular-nums">{formatPrice(total)}</strong>
-        </div>
+        {!quote && (
+          <div className="mt-3 flex justify-between border-t border-border pt-3">
+            <span className="font-semibold">Tổng tạm tính</span>
+            <strong className="text-lg text-price tabular-nums">{formatPrice(total)}</strong>
+          </div>
+        )}
         <p className="mt-3 flex gap-2 rounded-lg bg-tint p-3 text-sm text-muted">
           <ShieldCheck size={18} className="shrink-0 text-trust" aria-hidden="true" />
-          Thanh toán khi nhận hàng (COD) hoặc chuyển khoản — nhân viên gọi xác nhận trước khi giao.
+          {quote
+            ? "Báo giá miễn phí theo số lượng và gói lắp đặt. Kỹ thuật viên có thể khảo sát tận nơi trước khi chốt phương án."
+            : "Thanh toán khi nhận hàng (COD) hoặc chuyển khoản — nhân viên gọi xác nhận trước khi giao."}
         </p>
         {state && !state.ok && (
           <p role="alert" className="mt-3 text-sm font-medium text-price">
@@ -148,7 +159,7 @@ export function CheckoutClient({ siteName }: { siteName: string }) {
         )}
         <button disabled={pending || !items.length} className={`${btn.cta} mt-4 w-full`}>
           {pending && <Loader2 size={18} className="animate-spin" aria-hidden="true" />}
-          {pending ? "Đang đặt hàng..." : "Xác nhận đặt hàng"}
+          {pending ? "Đang gửi..." : quote ? "Gửi yêu cầu báo giá" : "Xác nhận đặt hàng"}
         </button>
       </div>
     </form>

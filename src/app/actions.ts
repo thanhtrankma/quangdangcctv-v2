@@ -46,7 +46,9 @@ export async function placeOrder(_: Result | null, form: FormData): Promise<Resu
   if (!items.length) return { ok: false, error: "Sản phẩm trong giỏ không còn tồn tại." };
 
   const d = new Date();
-  const code = `DH${d.getFullYear().toString().slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}${Math.floor(Math.random() * 90000 + 10000)}`;
+  // Quote requests (price mode "contact") get a BG… code so they stand out from orders (DH…) in the admin.
+  const prefix = clean(form.get("kind"), 10) === "quote" ? "BG" : "DH";
+  const code = `${prefix}${d.getFullYear().toString().slice(2)}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}${Math.floor(Math.random() * 90000 + 10000)}`;
   await db().insert<Order>("orders", {
     code,
     customer_name: clean(form.get("name"), 120),

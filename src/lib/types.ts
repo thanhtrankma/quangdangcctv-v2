@@ -251,6 +251,8 @@ export interface Settings {
     seo_description: string;
     og_image: string;
     ga_id: string;
+    /** "contact": hide every price, the cart becomes a quote-request list. */
+    price_mode: "show" | "contact";
   };
   header: {
     topbar_left: string;
@@ -286,6 +288,32 @@ export interface Settings {
     chat_text: string;
     policies: PolicyItem[];
   };
+  solutions_page: {
+    eyebrow: string;
+    title: string;
+    intro: string;
+    steps: { title: string; text: string }[];
+    values: { title: string; text: string }[];
+    cta_title: string;
+    cta_text: string;
+  };
+}
+
+export interface Solution extends BaseRow {
+  slug: string;
+  title: string;
+  summary: string;
+  icon: string;
+  cover: string;
+  highlights: { text: string }[];
+  content: string;
+  related_categories: { category_id: string }[];
+  faqs: Faq[];
+  show_on_home: boolean;
+  sort_order: number;
+  status: Status;
+  seo_title?: string;
+  seo_description?: string;
 }
 
 export type SettingsKey = keyof Settings;

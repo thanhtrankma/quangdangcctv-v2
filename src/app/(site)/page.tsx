@@ -1,22 +1,15 @@
 import Link from "next/link";
-import { ArrowRight, BadgeCheck, CreditCard, Headset, Phone, RefreshCcw, ShieldCheck, Truck, Wrench, type LucideIcon } from "lucide-react";
+import { ArrowRight, BadgeCheck, Phone, ShieldCheck } from "lucide-react";
 import { CategoryIcon } from "@/components/site/category-icon";
 import { ContactForm } from "@/components/site/contact-form";
 import { HeroCarousel } from "@/components/site/hero-carousel";
+import { ProcessSteps, SolutionGrid, ValuesStrip } from "@/components/site/solutions";
 import { Img } from "@/components/site/img";
 import { btn, FaqSection, PostCard, ProductCard, SectionHeading } from "@/components/site/ui";
-import { categoryHref, getBanners, getBrands, getCategories, getPosts, getProducts, getSettings } from "@/lib/data";
-
-const POLICY_ICONS: LucideIcon[] = [Truck, RefreshCcw, CreditCard, Headset, Wrench];
-
-/** "<strong>Title</strong><br>Detail" → { title, detail } */
-function splitPolicy(html: string) {
-  const [first, ...rest] = html.split(/<br\s*\/?>/i).map((s) => s.replace(/<[^>]+>/g, "").trim());
-  return { title: first, detail: rest.join(" ") };
-}
+import { categoryHref, getBanners, getBrands, getCategories, getPageBySlug, getPosts, getProducts, getSettings, getSolutions } from "@/lib/data";
 
 export default async function HomePage() {
-  const [{ general, home, product_page }, cats, brands, banners, posts, all, deals] = await Promise.all([
+  const [{ general, home, solutions_page: sp }, cats, brands, banners, posts, all, deals, solutions, projects] = await Promise.all([
     getSettings(),
     getCategories(),
     getBrands(),
@@ -24,7 +17,11 @@ export default async function HomePage() {
     getPosts({ limit: 4, withCount: false }),
     getProducts({ limit: 0 }),
     getProducts({ featured: true, limit: 10, withCount: false }),
+    getSolutions(),
+    getPageBySlug("du-an-tieu-bieu"),
   ]);
+  const quote = general.price_mode === "contact";
+  const homeSolutions = solutions.filter((s) => s.show_on_home);
   const tops = cats.filter((c) => !c.parent_id && c.show_on_home);
   const shelves = await Promise.all(
     tops.map(async (c) => {
@@ -34,9 +31,9 @@ export default async function HomePage() {
   );
   const featuredBrands = brands.filter((b) => b.featured);
   const stats = [
-    { value: `${all.count}+`, label: "Sản phẩm chính hãng" },
+    { value: String(solutions.length), label: "Nhóm giải pháp trọn gói" },
+    { value: `${all.count}+`, label: "Thiết bị chính hãng" },
     { value: String(brands.length), label: "Thương hiệu phân phối" },
-    { value: String(cats.length), label: "Danh mục sản phẩm" },
     { value: "24/7", label: "Hỗ trợ kỹ thuật" },
   ];
 
@@ -62,39 +59,54 @@ export default async function HomePage() {
         </aside>
       </div>
 
-      {/* Intro */}
-      <section className="mt-10 grid items-end gap-4 md:grid-cols-[1fr_auto]">
-        <div className="max-w-3xl">
-          <p className="text-2xl leading-snug font-bold text-ink md:text-[32px]">{home.heading}</p>
-          <p className="mt-2 text-muted">{home.intro}</p>
+      {/* Positioning: one contractor, end-to-end */}
+      <section className="mt-10 rounded-2xl bg-gradient-to-br from-navy via-ink to-primary p-5 text-white md:p-10" aria-labelledby="pitch-title">
+        <div className="grid items-end gap-4 md:grid-cols-[1fr_auto]">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold tracking-wider text-sky-200 uppercase">{sp.eyebrow}</p>
+            <h2 id="pitch-title" className="mt-1 text-2xl leading-snug font-bold text-white md:text-4xl">
+              {sp.title}
+            </h2>
+            <p className="mt-2 text-sky-100/90">{sp.intro}</p>
+          </div>
+          <Link href="/giai-phap/" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 font-semibold text-primary transition-colors duration-200 hover:bg-sky-50">
+            Xem các giải pháp <ArrowRight size={18} aria-hidden="true" />
+          </Link>
         </div>
-        <Link href="/cua-hang/" className={btn.primary}>
-          Xem tất cả sản phẩm <ArrowRight size={18} aria-hidden="true" />
-        </Link>
+        <div className="mt-6">
+          <ProcessSteps steps={sp.steps} dark />
+        </div>
       </section>
 
-      {/* Trust strip */}
-      <ul className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Cam kết dịch vụ">
-        {product_page.policies.slice(0, 4).map((p, i) => {
-          const Icon = POLICY_ICONS[i % POLICY_ICONS.length];
-          const { title, detail } = splitPolicy(p.text);
-          return (
-            <li key={i} className="flex items-center gap-3 rounded-xl border border-border bg-white p-4">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">
-                <Icon size={22} aria-hidden="true" />
-              </span>
-              <span className="min-w-0">
-                <span className="block font-semibold text-ink">{title}</span>
-                {detail && <span className="block text-sm text-muted">{detail}</span>}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      {/* Solutions */}
+      {homeSolutions.length > 0 && (
+        <section className="mt-14" aria-labelledby="solutions-title">
+          <SectionHeading id="solutions-title" eyebrow="Giải pháp" title="Chúng tôi triển khai" action={{ href: "/giai-phap/", label: "Tất cả giải pháp" }} />
+          <SolutionGrid solutions={homeSolutions} />
+        </section>
+      )}
+
+      <section className="mt-8">
+        <ValuesStrip values={sp.values} />
+      </section>
+
+      {/* Projects */}
+      {projects && (
+        <section className="mt-14 flex flex-col items-start justify-between gap-4 rounded-2xl border border-border bg-white p-5 md:flex-row md:items-center md:p-8">
+          <div>
+            <p className="text-xs font-semibold tracking-wider text-trust uppercase">Năng lực thực tế</p>
+            <h2 className="mt-1 text-2xl font-bold">Dự án tiêu biểu đã triển khai</h2>
+            <p className="mt-1 text-muted">Nhà ở, biệt thự, nhà xưởng, văn phòng, khu công nghiệp tại Hải Phòng và các tỉnh lân cận.</p>
+          </div>
+          <Link href="/du-an-tieu-bieu/" className={btn.primary}>
+            Xem dự án <ArrowRight size={18} aria-hidden="true" />
+          </Link>
+        </section>
+      )}
 
       {/* Categories */}
       <section className="mt-14" aria-labelledby="cats-title">
-        <SectionHeading id="cats-title" eyebrow={home.menu_eyebrow} title={home.menu_title} action={{ href: "/cua-hang/", label: "Tất cả" }} />
+        <SectionHeading id="cats-title" eyebrow="Thiết bị" title="Thiết bị chúng tôi cung cấp" action={{ href: "/cua-hang/", label: "Tất cả thiết bị" }} />
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {shelves.map(({ cat, count, subs }) => (
             <li key={cat.id}>
@@ -115,7 +127,7 @@ export default async function HomePage() {
       </section>
 
       {/* Deals */}
-      {deals.rows.length > 0 && (
+      {!quote && deals.rows.length > 0 && (
         <section className="mt-14 rounded-2xl bg-gradient-to-br from-primary to-ink p-5 md:p-7" aria-labelledby="deals-title">
           <div className="mb-5 flex items-end justify-between gap-4">
             <div>
@@ -236,8 +248,8 @@ export default async function HomePage() {
       {/* Closing CTA */}
       <section className="mt-16 flex flex-col items-start justify-between gap-5 rounded-2xl bg-navy p-6 text-white md:flex-row md:items-center md:p-10">
         <div>
-          <h2 className="text-2xl font-bold text-white md:text-3xl">Cần lắp camera, wifi hay bộ lưu điện?</h2>
-          <p className="mt-2 text-sky-100/85">Khảo sát tận nơi, tư vấn giải pháp phù hợp ngân sách — {general.site_name} luôn sẵn sàng.</p>
+          <h2 className="text-2xl font-bold text-white md:text-3xl">{sp.cta_title}</h2>
+          <p className="mt-2 text-sky-100/85">{sp.cta_text}</p>
         </div>
         <div className="flex flex-wrap gap-3">
           <a href={`tel:${general.hotline}`} className={btn.cta}>

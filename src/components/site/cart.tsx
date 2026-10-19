@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { Check, ShoppingCart, X } from "lucide-react";
+import { Check, ClipboardList, ClipboardPlus, ShoppingCart, X } from "lucide-react";
 import { formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
 import type { OrderItem } from "@/lib/types";
 import { Img } from "./img";
@@ -18,11 +18,19 @@ type CartCtx = {
   setQty: (slug: string, variant: string, qty: number) => void;
   remove: (slug: string, variant: string) => void;
   clear: () => void;
+  /** “Liên hệ báo giá” mode: no prices anywhere, the cart is a quote request. */
+  quote: boolean;
 };
 
 const Ctx = createContext<CartCtx | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+/** Wording for the two modes: a shopping cart, or a list of items the customer wants a quote for. */
+export const cartWords = (quote: boolean) =>
+  quote
+    ? { name: "Yêu cầu báo giá", short: "Báo giá", empty: "Bạn chưa chọn sản phẩm nào để báo giá.", add: "Thêm vào yêu cầu báo giá", added: "vào yêu cầu báo giá", view: "Xem danh sách", go: "Gửi yêu cầu" }
+    : { name: "Giỏ hàng", short: "Giỏ hàng", empty: "Giỏ hàng của bạn đang trống.", add: "Thêm vào giỏ hàng", added: "vào giỏ hàng", view: "Xem giỏ hàng", go: "Thanh toán" };
+
+export function CartProvider({ children, quote = false }: { children: React.ReactNode; quote?: boolean }) {
   const [items, setItems] = useState<OrderItem[]>([]);
   const [ready, setReady] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -57,8 +65,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       next[i] = { ...next[i], qty: next[i].qty + qty };
       return next;
     });
-    setToast(`Đã thêm “${item.name}” vào giỏ hàng`);
-  }, []);
+    setToast(`Đã thêm “${item.name}” ${cartWords(quote).added}`);
+  }, [quote]);
 
   const setQty = useCallback((slug: string, variant: string, qty: number) => {
     setItems((prev) => prev.map((p) => (p.slug === slug && p.variant === variant ? { ...p, qty: Math.min(99, Math.max(1, qty)) } : p)));
@@ -80,8 +88,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       setQty,
       remove,
       clear,
+      quote,
     }),
-    [items, ready, add, setQty, remove, clear],
+    [items, ready, add, setQty, remove, clear, quote],
   );
 
   return (
@@ -93,7 +102,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
             <Check size={18} className="shrink-0 text-emerald-300" aria-hidden="true" />
             <span className="line-clamp-2">{toast}</span>
             <Link href="/gio-hang/" className="shrink-0 font-semibold text-sky-200 underline underline-offset-2">
-              Xem giỏ
+              {quote ? "Xem danh sách" : "Xem giỏ"}
             </Link>
           </div>
         )}
@@ -109,21 +118,25 @@ export function useCart() {
 }
 
 export function AddToCartIconButton({ item, className = "" }: { item: Omit<OrderItem, "qty">; className?: string }) {
-  const { add } = useCart();
+  const { add, quote } = useCart();
+  const Icon = quote ? ClipboardPlus : ShoppingCart;
   return (
     <button
       type="button"
       onClick={() => add(item)}
-      aria-label={`Thêm ${item.name} vào giỏ hàng`}
+      aria-label={`${quote ? "Thêm vào yêu cầu báo giá" : "Thêm vào giỏ hàng"}: ${item.name}`}
+      title={cartWords(quote).add}
       className={`grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary transition-colors duration-200 hover:bg-primary hover:text-white ${className}`}
     >
-      <ShoppingCart size={18} aria-hidden="true" />
+      <Icon size={18} aria-hidden="true" />
     </button>
   );
 }
 
 export function HeaderCart() {
-  const { items, count, total, remove } = useCart();
+  const { items, count, total, remove, quote } = useCart();
+  const w = cartWords(quote);
+  const Icon = quote ? ClipboardList : ShoppingCart;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -145,19 +158,19 @@ export function HeaderCart() {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        aria-label={`Giỏ hàng, ${count} sản phẩm`}
+        aria-label={`${w.name}, ${count} sản phẩm`}
         className="relative flex min-h-11 items-center gap-2 rounded-lg px-2.5 text-ink transition-colors duration-200 hover:bg-tint"
       >
-        <ShoppingCart size={24} aria-hidden="true" />
+        <Icon size={24} aria-hidden="true" />
         <span className="absolute left-6 top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-cta px-1 text-[11px] font-bold text-white tabular-nums">
           {count}
         </span>
-        <span className="hidden text-sm font-semibold lg:inline">Giỏ hàng</span>
+        <span className="hidden text-sm font-semibold lg:inline">{w.short}</span>
       </button>
       {open && (
         <div className="absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] rounded-xl border border-border bg-white p-4 shadow-xl">
           {items.length === 0 ? (
-            <p className="py-6 text-center text-muted">Giỏ hàng của bạn đang trống.</p>
+            <p className="py-6 text-center text-muted">{w.empty}</p>
           ) : (
             <>
               <ul className="max-h-80 space-y-3 overflow-auto">
@@ -169,7 +182,13 @@ export function HeaderCart() {
                         {i.name}
                       </Link>
                       <div className="text-muted tabular-nums">
-                        {i.qty} × <span className="font-semibold text-price">{formatPrice(i.price)}</span>
+                        {quote ? (
+                          <>Số lượng: {i.qty}</>
+                        ) : (
+                          <>
+                            {i.qty} × <span className="font-semibold text-price">{formatPrice(i.price)}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                     <button
@@ -182,16 +201,18 @@ export function HeaderCart() {
                   </li>
                 ))}
               </ul>
-              <div className="mt-4 flex justify-between border-t border-border pt-3">
-                <span className="text-muted">Tạm tính</span>
-                <strong className="text-price tabular-nums">{formatPrice(total)}</strong>
-              </div>
+              {!quote && (
+                <div className="mt-4 flex justify-between border-t border-border pt-3">
+                  <span className="text-muted">Tạm tính</span>
+                  <strong className="text-price tabular-nums">{formatPrice(total)}</strong>
+                </div>
+              )}
               <div className="mt-3 grid grid-cols-2 gap-2 text-sm font-semibold">
                 <Link href="/gio-hang/" onClick={() => setOpen(false)} className="grid min-h-11 place-items-center rounded-lg border-2 border-primary text-primary hover:bg-primary-soft">
-                  Xem giỏ hàng
+                  {w.view}
                 </Link>
                 <Link href="/thanh-toan/" onClick={() => setOpen(false)} className="grid min-h-11 place-items-center rounded-lg bg-cta text-white hover:bg-cta-hover">
-                  Thanh toán
+                  {w.go}
                 </Link>
               </div>
             </>

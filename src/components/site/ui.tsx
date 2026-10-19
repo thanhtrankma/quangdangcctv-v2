@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
 import { formatDate, formatPrice, PLACEHOLDER_IMG } from "@/lib/format";
-import type { PostCardData, ProductCardData } from "@/lib/data";
+import { getSettings, type PostCardData, type ProductCardData } from "@/lib/data";
 import type { Faq, Product } from "@/lib/types";
 import { AddToCartIconButton } from "./cart";
 import { FaqItem } from "./faq-item";
@@ -46,8 +46,13 @@ export function Breadcrumb({ items }: { items: { label: string; href?: string }[
   );
 }
 
-export function PriceTag({ p, size = "md" }: { p: Pick<Product, "price" | "compare_at_price">; size?: "md" | "lg" }) {
-  if (p.price <= 0) {
+/** True when the site runs in "Liên hệ báo giá" mode (Admin → Thông tin chung → Chế độ giá). */
+export async function isQuoteMode() {
+  return (await getSettings()).general.price_mode === "contact";
+}
+
+export async function PriceTag({ p, size = "md" }: { p: Pick<Product, "price" | "compare_at_price">; size?: "md" | "lg" }) {
+  if (p.price <= 0 || (await isQuoteMode())) {
     return <span className={`font-semibold text-primary ${size === "lg" ? "text-2xl" : "text-[15px]"}`}>Liên hệ báo giá</span>;
   }
   const compare = p.compare_at_price && p.compare_at_price > p.price ? p.compare_at_price : 0;
@@ -67,8 +72,8 @@ export function PriceTag({ p, size = "md" }: { p: Pick<Product, "price" | "compa
   );
 }
 
-export function ProductCard({ p, priority = false }: { p: ProductCardData; priority?: boolean }) {
-  const off = discountOf(p);
+export async function ProductCard({ p, priority = false }: { p: ProductCardData; priority?: boolean }) {
+  const off = (await isQuoteMode()) ? 0 : discountOf(p);
   return (
     <article className="group relative flex h-full flex-col rounded-xl border border-border bg-white shadow-card transition-[box-shadow,border-color] duration-200 hover:border-primary/40 hover:shadow-lift">
       <Link

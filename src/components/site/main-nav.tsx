@@ -9,6 +9,66 @@ import type { NavLink } from "@/lib/types";
 import { CategoryIcon } from "./category-icon";
 
 export type NavCategory = { id: string; name: string; href: string; children: NavCategory[] };
+export type NavSolution = { slug: string; title: string; summary: string; icon: React.ReactNode };
+
+/** "Giải pháp" dropdown. Lives outside the scrollable link row so its panel isn't clipped. */
+function SolutionsMenu({ solutions, active }: { solutions: NavSolution[]; active: boolean }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => !ref.current?.contains(e.target as Node) && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+  return (
+    <div
+      ref={ref}
+      className="relative hidden lg:block"
+      onMouseEnter={() => (clearTimeout(timer.current), setOpen(true))}
+      onMouseLeave={() => (timer.current = setTimeout(() => setOpen(false), 120))}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className={`relative flex h-full items-center gap-1 px-3 text-[15px] font-semibold whitespace-nowrap transition-colors duration-200 xl:px-4 ${
+          active ? "text-primary after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:bg-primary" : "text-ink hover:text-primary"
+        }`}
+      >
+        Giải pháp
+        <ChevronDown size={16} aria-hidden="true" className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-50 w-[min(720px,calc(100vw-48px))] rounded-b-xl border border-t-0 border-border bg-white p-4 shadow-xl">
+          <ul className="grid grid-cols-2 gap-1">
+            {solutions.map((s) => (
+              <li key={s.slug}>
+                <Link href={`/giai-phap/${s.slug}/`} onClick={() => setOpen(false)} className="flex gap-3 rounded-lg p-3 transition-colors duration-150 hover:bg-tint">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-primary-soft text-primary">{s.icon}</span>
+                  <span className="min-w-0">
+                    <span className="block font-semibold text-ink">{s.title}</span>
+                    <span className="line-clamp-1 text-sm text-muted">{s.summary}</span>
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <Link href="/giai-phap/" onClick={() => setOpen(false)} className="mt-2 flex min-h-11 items-center justify-center gap-1 rounded-lg bg-primary font-semibold text-white hover:bg-primary-hover">
+            Tất cả giải pháp & quy trình triển khai
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function MegaMenu({ tree, onNavigate }: { tree: NavCategory[]; onNavigate: () => void }) {
   const [active, setActive] = useState(0);
@@ -100,15 +160,19 @@ function MobileTree({ nodes, depth = 0, onNavigate }: { nodes: NavCategory[]; de
 
 export function MainNav({
   tree,
-  links,
+  links: allLinks,
+  solutions = [],
   hotline,
   hotlineDisplay,
 }: {
   tree: NavCategory[];
   links: NavLink[];
+  solutions?: NavSolution[];
   hotline: string;
   hotlineDisplay: string;
 }) {
+  // "Giải pháp" has its own dropdown, so a menu link to it from the admin would be a duplicate.
+  const links = solutions.length ? allLinks.filter((l) => !l.href.startsWith("/giai-phap")) : allLinks;
   const pathname = usePathname();
   const [megaOpen, setMegaOpen] = useState(false);
   const [drawer, setDrawer] = useState(false);
@@ -180,6 +244,8 @@ export function MainNav({
           Danh mục & menu
         </button>
 
+        {solutions.length > 0 && <SolutionsMenu solutions={solutions} active={pathname.startsWith("/giai-phap")} />}
+
         <ul className="no-scrollbar hidden min-w-0 flex-1 items-stretch overflow-x-auto lg:flex" role="list">
           {links.map((l, n) => (
             <li key={`${l.label}-${n}`}>
@@ -211,7 +277,31 @@ export function MainNav({
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <p className="px-4 pt-4 pb-1 text-xs font-semibold tracking-wider text-subtle uppercase">Danh mục sản phẩm</p>
+              {solutions.length > 0 && (
+                <>
+                  <p className="px-4 pt-4 pb-1 text-xs font-semibold tracking-wider text-subtle uppercase">Giải pháp</p>
+                  <ul>
+                    {solutions.map((s) => (
+                      <li key={s.slug}>
+                        <Link
+                          href={`/giai-phap/${s.slug}/`}
+                          onClick={() => setDrawer(false)}
+                          className="flex min-h-12 items-center gap-3 px-4 text-[15px] text-body"
+                        >
+                          <span className="text-primary">{s.icon}</span>
+                          {s.title}
+                        </Link>
+                      </li>
+                    ))}
+                    <li>
+                      <Link href="/giai-phap/" onClick={() => setDrawer(false)} className="flex min-h-12 items-center px-4 text-[15px] font-semibold text-primary">
+                        Tất cả giải pháp →
+                      </Link>
+                    </li>
+                  </ul>
+                </>
+              )}
+              <p className="border-t border-border px-4 pt-4 pb-1 text-xs font-semibold tracking-wider text-subtle uppercase">Danh mục sản phẩm</p>
               <MobileTree nodes={tree} onNavigate={() => setDrawer(false)} />
               <p className="border-t border-border px-4 pt-4 pb-1 text-xs font-semibold tracking-wider text-subtle uppercase">Trang</p>
               <ul>

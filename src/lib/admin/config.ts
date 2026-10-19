@@ -132,7 +132,7 @@ export const CONTACT_STATUS = [
 export const resources: Resource[] = [
   {
     key: "orders",
-    label: "Đơn hàng",
+    label: "Đơn hàng & báo giá",
     singular: "đơn hàng",
     group: "Bán hàng",
     titleField: "code",
@@ -588,6 +588,62 @@ resources.push(
   },
 );
 
+export const SOLUTION_ICONS = [
+  { value: "cctv", label: "Camera" },
+  { value: "wifi", label: "Wifi / mạng" },
+  { value: "snowflake", label: "Điều hòa" },
+  { value: "house", label: "Nhà thông minh" },
+  { value: "sun", label: "Điện mặt trời" },
+  { value: "battery", label: "Bộ lưu điện" },
+  { value: "sofa", label: "Nội thất" },
+  { value: "building", label: "Xây dựng" },
+  { value: "shield", label: "An ninh" },
+  { value: "zap", label: "Điện" },
+];
+
+resources.push({
+  key: "solutions",
+  label: "Giải pháp",
+  singular: "giải pháp",
+  group: "Nội dung",
+  titleField: "title",
+  searchColumns: ["title", "summary"],
+  defaultOrder: [{ column: "sort_order" }, { column: "title" }],
+  viewPath: (r) => `/giai-phap/${r.slug}/`,
+  columns: [
+    { name: "cover", label: "Ảnh", type: "image" },
+    { name: "title", label: "Giải pháp" },
+    { name: "show_on_home", label: "Trang chủ", type: "boolean" },
+    { name: "sort_order", label: "Thứ tự", type: "number" },
+    { name: "status", label: "Trạng thái", type: "status" },
+  ],
+  fields: [
+    { name: "title", label: "Tên giải pháp", type: "text", required: true },
+    { name: "slug", label: "Đường dẫn (slug)", type: "slug", from: "title", required: true, help: "URL: /giai-phap/<slug>/" },
+    { name: "summary", label: "Mô tả ngắn (hiện trên thẻ giải pháp)", type: "textarea" },
+    { name: "highlights", label: "Điểm nổi bật (3–5 dòng)", type: "list", itemLabel: "text", fields: [{ name: "text", label: "Nội dung", type: "text" }] },
+    { name: "content", label: "Nội dung chi tiết", type: "richtext" },
+    {
+      name: "related_categories",
+      label: "Danh mục thiết bị liên quan",
+      type: "list",
+      itemLabel: "category_id",
+      help: "Sản phẩm thuộc các danh mục này hiện ở cuối trang giải pháp",
+      fields: [{ name: "category_id", label: "Danh mục", type: "relation", relation: "categories" }],
+    },
+    { name: "faqs", label: "Câu hỏi thường gặp", type: "list", itemLabel: "question", fields: [
+      { name: "question", label: "Câu hỏi", type: "text" },
+      { name: "answer", label: "Trả lời (cho phép HTML)", type: "textarea" },
+    ] },
+    { name: "cover", label: "Ảnh đại diện", type: "image", side: true },
+    { name: "icon", label: "Biểu tượng", type: "select", options: SOLUTION_ICONS, side: true, default: "cctv" },
+    { name: "status", label: "Trạng thái", type: "select", options: STATUS, side: true, default: "published" },
+    { name: "show_on_home", label: "Hiện trên trang chủ", type: "boolean", side: true, default: true },
+    { name: "sort_order", label: "Thứ tự (nhỏ lên trước)", type: "number", side: true, default: 0 },
+    ...SEO,
+  ],
+});
+
 /** Hand-built admin pages shown in the sidebar next to the generic resources. */
 export const adminPages = [
   { group: "Kho hàng", href: "/admin/inventory/", label: "Tồn kho" },
@@ -611,6 +667,17 @@ export const settingsGroups: SettingsGroup[] = [
     label: "Thông tin chung",
     description: "Logo, hotline, email, mạng xã hội và SEO mặc định.",
     fields: [
+      {
+        name: "price_mode",
+        label: "Chế độ giá trên website",
+        type: "select",
+        width: "half",
+        options: [
+          { value: "contact", label: "Ẩn giá – hiện “Liên hệ báo giá”, giỏ hàng thành yêu cầu báo giá" },
+          { value: "show", label: "Hiện giá – bán hàng trực tuyến" },
+        ],
+        help: "Đổi lúc nào cũng được, áp dụng cho toàn bộ website.",
+      },
       { name: "site_name", label: "Tên website", type: "text", width: "half" },
       { name: "hotline_display", label: "Hotline (hiển thị)", type: "text", width: "half" },
       { name: "hotline", label: "Hotline (số để gọi, không dấu cách)", type: "text", width: "half" },
@@ -701,5 +768,26 @@ export const settingsGroups: SettingsGroup[] = [
     ],
   },
 ];
+
+settingsGroups.push({
+  key: "solutions_page",
+  label: "Trang giải pháp",
+  description: "Khẩu hiệu, quy trình triển khai và cam kết hiển thị ở trang chủ và trang Giải pháp.",
+  fields: [
+    { name: "eyebrow", label: "Khẩu hiệu nhỏ", type: "text", width: "half" },
+    { name: "title", label: "Tiêu đề", type: "text", width: "half" },
+    { name: "intro", label: "Đoạn giới thiệu", type: "textarea" },
+    { name: "steps", label: "Quy trình triển khai", type: "list", itemLabel: "title", fields: [
+      { name: "title", label: "Bước", type: "text" },
+      { name: "text", label: "Mô tả", type: "textarea" },
+    ] },
+    { name: "values", label: "Cam kết", type: "list", itemLabel: "title", fields: [
+      { name: "title", label: "Tiêu đề", type: "text" },
+      { name: "text", label: "Mô tả ngắn", type: "text" },
+    ] },
+    { name: "cta_title", label: "Lời kêu gọi – tiêu đề", type: "text" },
+    { name: "cta_text", label: "Lời kêu gọi – mô tả", type: "text" },
+  ],
+});
 
 export const getSettingsGroup = (key: string) => settingsGroups.find((g) => g.key === key);

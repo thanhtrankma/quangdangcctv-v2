@@ -5,7 +5,8 @@
 import { unstable_cache } from "next/cache";
 import { cache } from "react";
 import { db } from "@/lib/db";
-import type { Banner, Brand, Category, Page, Post, PostCategory, Product, Video } from "@/lib/types";
+import { seedSolutions } from "@/data/solutions";
+import type { Banner, Brand, Category, Page, Post, PostCategory, Product, Solution, Video } from "@/lib/types";
 
 export const CONTENT_TAG = "content";
 
@@ -171,3 +172,33 @@ export const getVideos = cached("videos", async () => {
   const { rows } = await db().list<Video>("videos", { where: { active: true }, order: [{ column: "sort_order" }], withCount: false });
   return rows;
 });
+
+/**
+ * Published solutions in display order. Falls back to the starter set when the table doesn't exist yet
+ * (migration 003 not run), so the site keeps working during the switch-over.
+ */
+export const getSolutions = cached("solutions", async (): Promise<Solution[]> => {
+  try {
+    const { rows } = await db().list<Solution>("solutions", {
+      where: { status: "published" },
+      order: [{ column: "sort_order" }, { column: "title" }],
+      withCount: false,
+    });
+    return rows;
+  } catch (e) {
+    console.warn("[solutions] using starter data:", (e as Error).message);
+    return seedSolutions;
+  }
+});
+
+export const getSolutionBySlug = async (slug: string) => (await getSolutions()).find((s) => s.slug === slug) ?? null;
+
+/** Solutions that list this category (or one of its ancestors) as related. */
+export async function solutionsForCategory(categoryId: string | null) {
+  if (!categoryId) return [];
+  const [solutions, cats] = await Promise.all([getSolutions(), getCategories()]);
+  const cat = cats.find((c) => c.id === categoryId);
+  if (!cat) return [];
+  const chain = new Set(categoryChain(cats, cat).map((c) => c.id));
+  return solutions.filter((s) => (s.related_categories ?? []).some((r) => chain.has(r.category_id)));
+}

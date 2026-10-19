@@ -7,6 +7,7 @@ import { Img } from "./img";
 export async function BlogSidebar() {
   const [posts, featured, { general }] = await Promise.all([getPosts({ limit: 5, withCount: false }), getProducts({ featured: true, limit: 5, withCount: false }), getSettings()]);
   const box = "rounded-2xl border border-border bg-white p-5";
+  const quote = general.price_mode === "contact";
   return (
     <aside className="space-y-5 lg:sticky lg:top-36 lg:self-start">
       <div className="rounded-2xl bg-navy p-5 text-white">
@@ -39,7 +40,7 @@ export async function BlogSidebar() {
       {featured.rows.length > 0 && (
         <section className={box} aria-labelledby="side-products">
           <h2 id="side-products" className="font-heading text-base font-semibold">
-            Sản phẩm đang ưu đãi
+            {quote ? "Sản phẩm tiêu biểu" : "Sản phẩm đang ưu đãi"}
           </h2>
           <ul className="mt-3 divide-y divide-border">
             {featured.rows.map((p) => (
@@ -49,7 +50,11 @@ export async function BlogSidebar() {
                   <Link href={`/san-pham/${p.slug}/`} className="line-clamp-2 font-medium text-body after:absolute after:inset-0 hover:text-primary">
                     {p.name}
                   </Link>
-                  <span className="font-semibold text-price tabular-nums">{formatPrice(p.price)}</span>
+                  {quote ? (
+                    <span className="text-xs font-medium text-primary">Liên hệ báo giá</span>
+                  ) : (
+                    <span className="font-semibold text-price tabular-nums">{formatPrice(p.price)}</span>
+                  )}
                 </div>
               </li>
             ))}

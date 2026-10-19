@@ -5,8 +5,9 @@
 import scraped from "./scraped.json";
 import type {
   Banner, Brand, Category, ContactMessage, Order, Page, Post, PostCategory, PriceHistory, Product, PurchaseOrder,
-  StockMovement, Supplier, Video,
+  Solution, StockMovement, Supplier, Video,
 } from "@/lib/types";
+import { seedSolutions } from "./solutions";
 
 const now = "2026-09-24T00:00:00.000Z";
 const stamp = <T extends object>(rows: T[]) => rows.map((r) => ({ created_at: now, updated_at: now, ...r }));
@@ -38,6 +39,8 @@ export const seedTables = {
   purchase_orders: [] as PurchaseOrder[],
   stock_movements: [] as StockMovement[],
   price_history: [] as PriceHistory[],
+  // Solutions (migration 003).
+  solutions: seedSolutions as Solution[],
 };
 
 export type TableName = keyof typeof seedTables;

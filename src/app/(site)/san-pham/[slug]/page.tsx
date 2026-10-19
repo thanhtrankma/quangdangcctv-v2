@@ -5,8 +5,9 @@ import {
   CheckCircle2, CircleAlert, CreditCard, Headset, MessageCircle, Phone, RefreshCcw, ShieldCheck, Truck, Wrench, type LucideIcon,
 } from "lucide-react";
 import { BuyBox, ExpandableDescription, Gallery } from "@/components/site/product-detail-client";
+import { SolutionIcon } from "@/components/site/solutions";
 import { Breadcrumb, cartItemOf, discountOf, PriceTag, ProductGrid, RichContent } from "@/components/site/ui";
-import { categoryChain, categoryHref, getBrands, getCategories, getProductBySlug, getProducts, getSettings } from "@/lib/data";
+import { categoryChain, categoryHref, getBrands, getCategories, getProductBySlug, getProducts, getSettings, solutionsForCategory } from "@/lib/data";
 import { formatPrice, stripHtml } from "@/lib/format";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -31,7 +32,9 @@ export default async function ProductPage({ params }: Props) {
   const cat = cats.find((c) => c.id === p.category_id);
   const brand = brands.find((b) => b.id === p.brand_id);
   const related = p.category_id ? (await getProducts({ categoryId: p.category_id, limit: 10, excludeId: p.id, withCount: false })).rows : [];
-  const off = discountOf(p);
+  const quote = general.price_mode === "contact";
+  const inSolutions = await solutionsForCategory(p.category_id);
+  const off = quote ? 0 : discountOf(p);
   const saved = p.compare_at_price && p.compare_at_price > p.price ? p.compare_at_price - p.price : 0;
 
   const jsonLd = {
@@ -43,7 +46,7 @@ export default async function ProductPage({ params }: Props) {
     description: stripHtml(p.short_description || "").slice(0, 300),
     brand: brand ? { "@type": "Brand", name: brand.name } : undefined,
     offers:
-      p.price > 0
+      p.price > 0 && !quote
         ? {
             "@type": "Offer",
             priceCurrency: "VND",
@@ -71,6 +74,7 @@ export default async function ProductPage({ params }: Props) {
 
           <div className="mt-4 rounded-xl bg-tint p-4">
             <PriceTag p={p} size="lg" />
+            {quote && <p className="mt-1 text-sm text-muted">Giá tốt theo số lượng và gói lắp đặt — gửi yêu cầu để nhận báo giá trong ngày.</p>}
             {off > 0 && (
               <p className="mt-1 text-sm font-medium text-trust">
                 Tiết kiệm {formatPrice(saved)} ({off}%)
@@ -102,7 +106,7 @@ export default async function ProductPage({ params }: Props) {
           <div className="mt-3 grid grid-cols-2 gap-3">
             <a href={`tel:${general.hotline}`} className="flex min-h-12 flex-col items-center justify-center rounded-lg bg-primary px-3 text-center text-white transition-colors duration-200 hover:bg-primary-hover">
               <span className="flex items-center gap-1.5 font-semibold">
-                <Phone size={16} aria-hidden="true" /> {p.price > 0 ? product_page.buy_now_text : "Gọi báo giá"}
+                <Phone size={16} aria-hidden="true" /> {p.price > 0 && !quote ? product_page.buy_now_text : "Gọi tư vấn & báo giá"}
               </span>
               <span className="text-xs text-sky-100">{general.hotline_display}</span>
             </a>
@@ -112,6 +116,23 @@ export default async function ProductPage({ params }: Props) {
               </a>
             )}
           </div>
+
+          {inSolutions.length > 0 && (
+            <div className="mt-5 rounded-xl border border-primary/20 bg-primary-soft/50 p-4">
+              <p className="text-sm font-semibold text-ink">Thiết bị thuộc giải pháp</p>
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {inSolutions.map((sol) => (
+                  <li key={sol.id}>
+                    <Link href={`/giai-phap/${sol.slug}/`} className="inline-flex min-h-9 items-center gap-1.5 rounded-full bg-white px-3 text-sm font-medium text-primary shadow-sm hover:bg-tint">
+                      <SolutionIcon name={sol.icon} className="h-4 w-4" />
+                      {sol.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-xs text-muted">Xem phương án trọn gói: tư vấn, cung cấp, thi công và bảo hành.</p>
+            </div>
+          )}
 
           <dl className="mt-5 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm">
             {cat && (
