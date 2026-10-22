@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    // Vercel's image optimizer quota ran out (402 OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED), so images load straight
+    // from Supabase Storage. Remove this to re-enable /_next/image once a plan or custom loader covers it.
+    unoptimized: true,
     // Product/post/banner images live in Supabase Storage (public buckets). Other hosts render unoptimized (see components/site/img.tsx).
     remotePatterns: [{ protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" }],
     qualities: [75],
